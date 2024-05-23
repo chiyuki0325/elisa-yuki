@@ -148,7 +148,8 @@ Item {
             id: showPlaylistButton
             text: i18nc("@action:button", "Show Playlist")
             icon.name: "view-media-playlist"
-            display: navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
+            // display: navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
+            display: AbstractButton.IconOnly
             onClicked: navigationBar.isWidescreen ? mainWindow.toggleDrawer() : playlistDrawer.open()
         }
     }

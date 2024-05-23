@@ -82,13 +82,6 @@ Kirigami.Page {
 
                 text: topItem.title
             }
-            // Invisible; this exists purely to make the toolbar height match that
-            // of the adjacent one
-            ToolButton {
-                icon.name: "edit-paste"
-                opacity: 0
-                focusPolicy: Qt.NoFocus
-            }
 
             ButtonGroup {
                 id: nowPlayingButtons
@@ -234,8 +227,9 @@ Kirigami.Page {
         RowLayout {
             id: contentLayout
 
-            property bool wideMode: allMetaDataLoader.width <= width * 0.5
-                                    && allMetaDataLoader.height <= height
+            // property bool wideMode: allMetaDataLoader.width <= width * 0.5
+            //                        && allMetaDataLoader.height <= height
+            property bool wideMode: false
 
             anchors.fill: parent
             visible: !topItem.nothingPlaying
@@ -355,6 +349,8 @@ Kirigami.Page {
                         delegate: Label {
                             text: lyric
                             width: lyricItem.width
+                            bottomPadding: 8
+                            topPadding: 8
                             wrapMode: Text.WordWrap
                             font.bold: ListView.isCurrentItem
                             horizontalAlignment: contentLayout.wideMode? Text.AlignLeft : Text.AlignHCenter
@@ -368,21 +364,22 @@ Kirigami.Page {
                                     ElisaApplication.audioPlayer.position = timestamp;
                                 }
                             }
+                            font.pointSize: ListView.isCurrentItem ? 14: 12
                         }
                         currentIndex: lyricsModel.highlightedIndex
+                        property int lastIndex: -1
                         onCurrentIndexChanged: {
                             if (currentIndex === -1)
                                 return
 
                             // center aligned
-                            var toPos = Math.round(currentItem.y + currentItem.height * 0.5 - lyricScroll.height * 0.5)
+                            var toPos = Math.round(currentItem.y + currentItem.height * 0.5 + 8 - lyricScroll.height * 0.5)
                             // make sure the first and the last lines are always
                             // positioned at the beginning and the end of the view
 
                             toPos = Math.max(toPos, 0)
                             toPos = Math.min(toPos, contentHeight - lyricScroll.height)
                             lyricScrollAnimation.to = toPos
-
                         }
                     }
 
@@ -431,7 +428,8 @@ Kirigami.Page {
     // Footer with file path label
     footer: ToolBar {
         implicitHeight: Math.round(Kirigami.Units.gridUnit * 2)
-        visible: !topItem.nothingPlaying
+        // visible: !topItem.nothingPlaying
+        visible: false
 
         RowLayout {
             anchors.fill: parent

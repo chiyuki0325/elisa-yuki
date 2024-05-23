@@ -160,10 +160,12 @@ BasePlayListDelegate {
                 (elisaTheme.toolButtonHeight + Kirigami.Units.smallSpacing))
 
             spacing: Kirigami.Units.smallSpacing
+            Item { implicitWidth: spacing }
 
             Loader {
-                Layout.leftMargin: trackRow.spacing
+                // Layout.leftMargin: trackRow.spacing
                 active: !simpleMode && playListEntry.showDragHandle
+                visible: playListEntry.hovered
                 sourceComponent: Kirigami.ListItemDragHandle {
                     listItem: playListEntry
                     listView: playListEntry.listView
@@ -273,7 +275,8 @@ BasePlayListDelegate {
                 id: buttonRowLoader
 
                 active: false
-                visible: active && !playListEntry.editingRating
+                // visible: active && !playListEntry.editingRating
+                visible: playListEntry.hovered
 
                 sourceComponent: Row {
                     Repeater {
