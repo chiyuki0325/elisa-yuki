@@ -16,7 +16,7 @@ ScrollView {
     property alias model: viewModeView.model
 
     property alias viewIndex: viewModeView.currentIndex
-    readonly property int wideWidth: Kirigami.Units.gridUnit * 12
+    readonly property int wideWidth: Kirigami.Units.gridUnit * 10
     readonly property int iconsOnlyWidth: Kirigami.Units.iconSizes.smallMedium + 2 * Kirigami.Units.largeSpacing + (ScrollBar.vertical.visible ? ScrollBar.vertical.implicitWidth : 0)
 
     signal switchView(int viewIndex)
