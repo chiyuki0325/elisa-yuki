@@ -34,3 +34,9 @@ CMakeLists.txt.user*
 .idea
 /cmake-build*
 .kateproject.build
+
+# PKGBUILD
+PKGBUILD/src/
+PKGBUILD/pkg/
+PKGBUILD/elisa*
+PKGBUILD/*.tar.zst
