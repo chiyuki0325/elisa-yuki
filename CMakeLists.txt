@@ -190,16 +190,18 @@ if (BUILD_TESTING)
 endif()
 add_subdirectory(doc)
 
-if (KF6DBusAddons_FOUND)
-    ecm_generate_dbus_service_file(
-        NAME org.kde.elisa
-        EXECUTABLE ${KDE_INSTALL_FULL_BINDIR}/elisa
-        DESTINATION ${KDE_INSTALL_DBUSSERVICEDIR}
-    )
-    set(ELISA_DBUSACTIVATABLE "DBusActivatable=true")
-else()
-    set(ELISA_DBUSACTIVATABLE)
-endif()
+
+# if (KF6DBusAddons_FOUND)
+#    ecm_generate_dbus_service_file(
+#        NAME org.kde.elisa
+#        EXECUTABLE ${KDE_INSTALL_FULL_BINDIR}/elisa
+#        DESTINATION ${KDE_INSTALL_DBUSSERVICEDIR}
+#    )
+#    set(ELISA_DBUSACTIVATABLE "DBusActivatable=true")
+# else()
+#    set(ELISA_DBUSACTIVATABLE)
+# endif()
+set(ELISA_DBUSACTIVATABLE)
 
 configure_file(org.kde.elisa.desktop.cmake ${CMAKE_CURRENT_BINARY_DIR}/org.kde.elisa.desktop @ONLY)
 install(
