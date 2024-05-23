@@ -628,7 +628,8 @@ void TrackMetadataModel::fetchLyrics()
         auto locker = QMutexLocker(&mFileScannerMutex);
         auto trackData = mFileScanner.scanOneFile(fileUrl);
         if (!trackData.lyrics().isEmpty()) {
-            return trackData.lyrics();
+            QString metaLyrics = trackData.lyrics() + QLatin1Char('\n');
+            return metaLyrics;
         }
 
         auto urlString = fileUrl.toString();
@@ -653,6 +654,7 @@ void TrackMetadataModel::fetchLyrics()
         }
         QTextStream in(&file);
         QString lrcFileContent = in.readAll();
+        lrcFileContent = lrcFileContent + QLatin1Char('\n');
         file.close();
         return lrcFileContent;
     });
