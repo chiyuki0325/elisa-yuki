@@ -4,7 +4,7 @@
 # Contributor: Kirikaze Chiyuki <me@chyk.ink>
 
 pkgname=elisa-yuki-git
-pkgver=29e6d7d7
+pkgver=f012f750
 pkgrel=1
 arch=(x86_64)
 pkgdesc="Simple music player aiming to provide a nice experience for its users, forked by @chiyuki0325"

@@ -11,4 +11,4 @@ SPDX-License-Identifier: LGPL-3.0-or-later
 
 **这些更改不会被合并到上游。**
 
-![Screenshot Elisa albums view](https://imgsrc.baidu.com/forum/pic/item/3b87e950352ac65c5a3f834ebdf2b21193138ad1.jpg)
+![Screenshot Elisa albums view](doc/screenshot.png)
