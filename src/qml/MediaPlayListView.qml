@@ -90,7 +90,8 @@ Kirigami.Page {
                         id: savePlaylistButton
                         text: i18nc("@action:button Save a playlist file", "Save…")
                         icon.name: 'document-save'
-                        displayHint: Kirigami.DisplayHint.KeepVisible
+                        // displayHint: Kirigami.DisplayHint.KeepVisible
+                        displayHint: Kirigami.DisplayHint.IconOnly
                         enabled: ElisaApplication.mediaPlayListProxyModel ? ElisaApplication.mediaPlayListProxyModel.tracksCount > 0 : false
                         onTriggered: {
                             mainWindow.fileDialog.savePlaylist()
@@ -100,7 +101,8 @@ Kirigami.Page {
                         id: loadPlaylistButton
                         text: i18nc("@action:button Load a playlist file", "Load…")
                         icon.name: 'document-open'
-                        displayHint: Kirigami.DisplayHint.KeepVisible
+                        // displayHint: Kirigami.DisplayHint.KeepVisible
+                        displayHint: Kirigami.DisplayHint.IconOnly
                         onTriggered: {
                             mainWindow.fileDialog.loadPlaylist()
                         }

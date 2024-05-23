@@ -240,8 +240,9 @@ Kirigami.Page {
         RowLayout {
             id: contentLayout
 
-            property bool wideMode: allMetaDataLoader.width <= width * 0.5
-                                    && allMetaDataLoader.height <= height
+            // property bool wideMode: allMetaDataLoader.width <= width * 0.5
+            //                        && allMetaDataLoader.height <= height
+            property bool wideMode: false
 
             anchors.fill: parent
             visible: !topItem.nothingPlaying
@@ -370,7 +371,9 @@ Kirigami.Page {
                             required property int timestamp
 
                             text: lyric
-                            width: lyricsView.width
+                            width: lyricItem.width
+                            bottomPadding: 8
+                            topPadding: 8
                             wrapMode: Text.WordWrap
                             font.bold: ListView.isCurrentItem
                             horizontalAlignment: contentLayout.wideMode? Text.AlignLeft : Text.AlignHCenter
@@ -384,6 +387,7 @@ Kirigami.Page {
                                     ElisaApplication.audioPlayer.position = timestamp;
                                 }
                             }
+                            font.pointSize: ListView.isCurrentItem ? 14: 12
                         }
 
                         header: Item {
@@ -395,12 +399,15 @@ Kirigami.Page {
                         }
 
                         currentIndex: lyricsModel.highlightedIndex
+                        property int lastIndex: -1
                         onCurrentIndexChanged: {
                             if (currentIndex === -1)
                                 return
 
                             // center aligned
-                            const toPos = Math.round(currentItem.y + currentItem.height * 0.5 - lyricScroll.height * 0.5)
+                            const toPos = Math.round(currentItem.y + currentItem.height * 0.5 + 8 - lyricScroll.height * 0.5)
+                            // make sure the first and the last lines are always
+                            // positioned at the beginning and the end of the view
 
                             lyricScrollAnimation.to = toPos
                         }
@@ -451,7 +458,8 @@ Kirigami.Page {
     // Footer with file path label
     footer: ToolBar {
         implicitHeight: Math.round(Kirigami.Units.gridUnit * 2)
-        visible: !topItem.nothingPlaying
+        // visible: !topItem.nothingPlaying
+        visible: false
 
         RowLayout {
             anchors.fill: parent

@@ -219,6 +219,8 @@ BasePlayerControl {
                     }
                 }
 
+                Item { implicitWidth: Kirigami.Units.smallSpacing }
+
                 FlatButtonWithToolTip {
                     id: repeatButton
                     text: {
@@ -277,6 +279,8 @@ BasePlayerControl {
                     }
                 }
 
+                Item { implicitWidth: Kirigami.Units.smallSpacing }
+
                 FlatButtonWithToolTip {
                     // normally toggles the playlist in contentView, but when the headerbar is too narrow to
                     // show the playlistDrawer handle, this opens the drawer instead
@@ -291,12 +295,15 @@ BasePlayerControl {
 
                     visible: !musicWidget.isMaximized && (!_togglesDrawer || musicWidget.isNearCollapse)
 
-                    display: _togglesDrawer ? AbstractButton.IconOnly : AbstractButton.TextBesideIcon
+                    // display: _togglesDrawer ? AbstractButton.IconOnly : AbstractButton.TextBesideIcon
+                    display: AbstractButton.IconOnly
                     text: i18nc("@action:button", "Show Playlist")
                     icon.name: "view-media-playlist"
 
                     checked: _togglesDrawer ? playlistDrawer.visible : contentView.showPlaylist
                 }
+
+                Item { implicitWidth: Kirigami.Units.smallSpacing }
 
                 FlatButtonWithToolTip {
                     id: menuButton
