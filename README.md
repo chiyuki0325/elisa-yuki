@@ -7,7 +7,9 @@ SPDX-License-Identifier: LGPL-3.0-or-later
 
 # Elisa
 
-<a href='https://flathub.org/apps/details/org.kde.elisa'><img width='190px' alt='Download on Flathub' src='https://flathub.org/assets/badges/flathub-badge-i-en.png'/></a>
+我对 KDE 的音乐播放器 [Elisa](https://apps.kde.org/elisa/) 的 fork，对界面和功能进行了一些微调，以符合我的使用需求。
+
+功能上，支持从 LRC 文件读取歌词，并且默认禁用了 D-Bus Activatable。
 
 ![Screenshot Elisa albums view](https://cdn.kde.org/screenshots/elisa/elisa.png)
 
