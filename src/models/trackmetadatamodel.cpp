@@ -312,16 +312,20 @@ void TrackMetadataModel::trackData(const TrackMetadataModel::TrackDataType &trac
 void TrackMetadataModel::fillDataFromTrackData(const TrackMetadataModel::TrackDataType &trackData)
 {
     mFullData = trackData;
+    fetchLyrics();
+
     if (!mFullData.hasElementType()) {
         mFullData[DataTypes::ElementTypeRole] = ElisaUtils::Track;
     }
     resetDisplayData();
 
+    /*
     if (trackData.hasDatabaseId()) {
         fetchLyrics();
     } else {
         Q_EMIT lyricsChanged();
     }
+    */
 
     mDatabaseId = trackData[DataTypes::DatabaseIdRole].toULongLong();
     Q_EMIT databaseIdChanged();
@@ -628,6 +632,10 @@ void TrackMetadataModel::fetchLyrics()
         }
 
         auto urlString = fileUrl.toString();
+        if (!urlString.startsWith(QStringLiteral("file://")))
+            return QString{};
+        urlString.remove(0, 7);
+
         int lastDotIndex = urlString.lastIndexOf(QStringLiteral("."));
 
         if (lastDotIndex != -1) {
@@ -647,9 +655,6 @@ void TrackMetadataModel::fetchLyrics()
         QString lrcFileContent = in.readAll();
         file.close();
         return lrcFileContent;
-
-
-        // return QString{};
     });
 
     mLyricsValueWatcher.setFuture(lyricicsValue);
