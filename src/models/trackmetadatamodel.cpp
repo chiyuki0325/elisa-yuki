@@ -16,6 +16,9 @@
 
 #include <KFormat>
 
+#include <QFile>
+#include <QTextStream>
+
 QList<DataTypes::ColumnsRoles> displayFields(const ElisaUtils::PlayListEntryType dataType)
 {
     switch (dataType) {
@@ -623,7 +626,30 @@ void TrackMetadataModel::fetchLyrics()
         if (!trackData.lyrics().isEmpty()) {
             return trackData.lyrics();
         }
-        return QString{};
+
+        auto urlString = fileUrl.toString();
+        int lastDotIndex = urlString.lastIndexOf(QStringLiteral("."));
+
+        if (lastDotIndex != -1) {
+            urlString = urlString.left(lastDotIndex + 1) + QStringLiteral("lrc");
+        } else {
+            return QString{};
+        }
+
+        QFile file(urlString);
+        if (!file.exists()) {
+            return QString{};
+        }
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            return QString{};
+        }
+        QTextStream in(&file);
+        QString lrcFileContent = in.readAll();
+        file.close();
+        return lrcFileContent;
+
+
+        // return QString{};
     });
 
     mLyricsValueWatcher.setFuture(lyricicsValue);
