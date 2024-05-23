@@ -33,3 +33,10 @@ CMakeLists.txt.user*
 .cache
 .idea
 /cmake-build*
+
+
+# PKGBUILD
+PKGBUILD/src/
+PKGBUILD/pkg/
+PKGBUILD/elisa*
+PKGBUILD/*.tar.zst
