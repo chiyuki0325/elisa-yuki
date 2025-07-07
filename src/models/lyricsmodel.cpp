@@ -136,7 +136,8 @@ LyricsModel::LyricsModelPrivate::parseOneLine(QString::const_iterator &begin,
     }
 
     if (size > 0) {
-        return QString(it, size);
+        auto line = QString(it, size);
+        return line.trimmed();
     } else {
         return {};
     }
@@ -214,6 +215,8 @@ bool LyricsModel::LyricsModelPrivate::parse(const QString &lyric)
     auto tag = parseTags(begin, end);
     std::vector<qint64> timeStamps;
 
+    bool lastLineWasEmpty = false; // last line was empty?
+
     while (begin != lyric.end()) {
         auto timeStamp = parseOneTimeStamp(begin, end);
         while (timeStamp >= 0) {
@@ -222,12 +225,29 @@ bool LyricsModel::LyricsModelPrivate::parse(const QString &lyric)
           timeStamps.push_back(timeStamp);
           timeStamp = parseOneTimeStamp(begin, end);
         }
-        auto string = parseOneLine(begin, end);
-        if (!timeStamps.empty()) {
-            for (auto time : timeStamps) {
-                lyrics.push_back({string, time});
+
+        auto line = parseOneLine(begin, end);
+        bool currentLineIsEmpty = line.isEmpty();
+
+        if (!(lastLineWasEmpty && currentLineIsEmpty)) {
+            if (!timeStamps.empty()) {
+                for (auto time : timeStamps) {
+                    lyrics.push_back({line, time});
+                }
+            } else {
+                // this line has no timestamp
+                // merge with last line
+                if (!lyrics.empty()) {
+                    auto &lastLyric = lyrics.back().first;
+                    lastLyric.append(QLatin1Char('\n'));
+                    if (line.contains(QLatin1Char(']')))
+                        lastLyric.append(QLatin1Char('['));
+                    lastLyric.append(line);
+                }
             }
         }
+
+        lastLineWasEmpty = currentLineIsEmpty;
         timeStamps.clear();
     }
 
