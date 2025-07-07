@@ -620,7 +620,8 @@ void TrackMetadataModel::fetchLyrics()
         auto locker = QMutexLocker(&mFileScannerMutex);
         auto trackData = mFileScanner.scanOneFile(fileUrl);
         if (!trackData.lyrics().isEmpty()) {
-            return std::make_pair(trackData.lyrics(), QString{});
+            QString metaLyrics = trackData.lyrics() + QLatin1Char('\n');
+            return std::make_pair(metaLyrics, QString{});
         }
         if (fileUrl.isLocalFile()) {
             QFileInfo fileInfo(fileUrl.toLocalFile());
