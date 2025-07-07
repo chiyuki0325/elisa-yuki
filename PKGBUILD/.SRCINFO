@@ -1,6 +1,6 @@
 pkgbase = elisa-yuki-git
 	pkgdesc = Simple music player aiming to provide a nice experience for its users, forked by @chiyuki0325
-	pkgver = 24.01.90.r14.g82824891
+	pkgver = 2025.r0.g97fc15f4
 	pkgrel = 1
 	url = https://github.com/chiyuki0325/elisa-yuki
 	arch = x86_64
