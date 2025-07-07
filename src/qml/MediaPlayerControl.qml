@@ -23,7 +23,7 @@ BasePlayerControl {
     property bool isTranslucent
     property bool isNearCollapse
 
-    implicitHeight: toolBar.implicitHeight
+    implicitHeight: toolBar.implicitHeight + (Kirigami.Units.smallSpacing * 0.2)
 
     signal maximize()
     signal minimize()
@@ -45,7 +45,11 @@ BasePlayerControl {
 
     ToolBar {
         id: toolBar
-        anchors.fill: parent
+        anchors {
+            fill: parent
+            topMargin: Kirigami.Units.smallSpacing
+            bottomMargin: Kirigami.Units.smallSpacing
+        }
 
         Kirigami.Theme.colorSet: Kirigami.Theme.Header
         Kirigami.Theme.inherit: false
