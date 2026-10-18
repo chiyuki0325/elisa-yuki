@@ -64,7 +64,8 @@ int DataModel::rowCount(const QModelIndex &parent) const
         return dataCount;
     }
 
-    dataCount = d->mAllTrackData.size() + d->mAllAlbumData.size() + d->mAllArtistData.size() + d->mAllGenreData.size();
+    dataCount = d->mModelType == ElisaUtils::Radio ? d->mAllRadiosData.size()
+                                                   : d->mAllTrackData.size() + d->mAllAlbumData.size() + d->mAllArtistData.size() + d->mAllGenreData.size();
 
     return dataCount;
 }
@@ -166,7 +167,7 @@ QVariant DataModel::data(const QModelIndex &index, int role) const
         {
             auto trackDuration = d->mAllTrackData[index.row()][TrackDataType::key_type::DurationRole].toTime();
             if (trackDuration.hour() == 0) {
-                result = trackDuration.toString(QStringLiteral("mm:ss"));
+                result = QLocale().toString(trackDuration, QStringLiteral("mm:ss"));
             } else {
                 result = trackDuration.toString();
             }

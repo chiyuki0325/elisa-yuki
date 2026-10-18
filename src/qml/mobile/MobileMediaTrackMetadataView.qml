@@ -8,12 +8,11 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import QtQuick.Controls 2.2
-import QtQuick.Window 2.2
-import QtQml.Models 2.2
-import QtQuick.Layouts 1.2
-import org.kde.kirigami 2.13 as Kirigami
+import QtQuick
+import QtQuick.Window
+import QtQuick.Layouts
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 import ".."
@@ -46,33 +45,33 @@ Kirigami.ScrollablePage {
     LayoutMirroring.enabled: Application.layoutDirection == Qt.RightToLeft
     LayoutMirroring.childrenInherit: true
 
-    title: isCreating ? i18nc("@title:window", "Create a Radio") :
-                        i18nc("@title:window", "View details")
+    title: isCreating ? KI18n.i18nc("@title:window", "Create a Radio") :
+                        KI18n.i18nc("@title:window", "View details")
 
     actions: [
         Kirigami.Action {
             icon.name: 'document-edit'
-            text: i18nc("@action:button", "Modify")
+            text: KI18n.i18nc("@action:button", "Modify")
             onTriggered: metadataForm.isModifying = true
             visible: !metadataForm.isModifying && !metadataForm.isCreating
         },
         Kirigami.Action {
             icon.name: "dialog-ok-apply"
-            text: i18nc("@action:button", "Save")
+            text: KI18n.i18nc("@action:button", "Save")
             onTriggered: metadataForm.isCreating ? metadataForm.applyAndClose() : metadataForm.apply()
             visible: metadataForm.isModifying || metadataForm.isCreating
         },
         Kirigami.Action {
             icon.name: 'dialog-cancel'
-            text: i18nc("@action:button", "Cancel")
+            text: KI18n.i18nc("@action:button", "Cancel")
             onTriggered: metadataForm.isCreating ? metadataForm.cancelAndClose() : metadataForm.cancel()
             visible: metadataForm.isModifying || metadataForm.isCreating
         },
         Kirigami.Action {
             icon.name: 'delete'
-            text: i18nc("@action:button", "Delete")
+            text: KI18n.i18nc("@action:button", "Delete")
             onTriggered: metadataForm.deleteItem()
-            visible: showDeleteButton && !isCreating
+            visible: metadataForm.showDeleteButton && !metadataForm.isCreating
         }
     ]
 
@@ -94,10 +93,10 @@ Kirigami.ScrollablePage {
             target: ElisaApplication
 
             function onMusicManagerChanged() {
-                if (isCreating) {
+                if (trackMetadata.isCreating) {
                     realModel.initializeForNewRadio()
                 } else {
-                    realModel.initializeByUrl(modelType, fileName)
+                    realModel.initializeByUrl(trackMetadata.modelType, trackMetadata.fileName)
                 }
             }
         }
@@ -110,7 +109,7 @@ Kirigami.ScrollablePage {
         // file location
         RowLayout {
             id: fileNameRow
-            visible: showTrackFileName
+            visible: trackMetadata.showTrackFileName
 
             spacing: Kirigami.Units.largeSpacing
 

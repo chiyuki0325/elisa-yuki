@@ -6,8 +6,8 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import Qt.labs.platform 1.1 as NativeMenu
+import QtQuick
+import Qt.labs.platform as NativeMenu
 import org.kde.elisa
 
 Item {
@@ -31,7 +31,7 @@ Item {
         function onClosing(close) {
             if (systemTrayIcon.available && root.showSystemTrayIcon && !root.forceCloseWindow) {
                 close.accepted = false
-                elisaMainWindow.hide()
+                root.elisaMainWindow.hide()
             }
         }
     }

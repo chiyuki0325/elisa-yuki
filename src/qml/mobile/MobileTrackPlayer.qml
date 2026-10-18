@@ -6,11 +6,12 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.3
-import QtQuick.Window 2.2
-import org.kde.kirigami 2.5 as Kirigami
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Window
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 import ".."
 import "../shared"
@@ -47,7 +48,7 @@ BasePlayerControl {
             Layout.preferredHeight: Kirigami.Units.gridUnit * 2
             Layout.maximumWidth: parent.height
             Layout.preferredWidth: Kirigami.Units.gridUnit * 2
-            text: i18nc("@action:button", "Minimize Player")
+            text: KI18n.i18nc("@action:button", "Minimize Player")
             icon.name: "arrow-down"
             icon.color: "white"
             Kirigami.Theme.colorSet: Kirigami.Theme.Complementary
@@ -56,7 +57,7 @@ BasePlayerControl {
         }
 
         // album art
-        ImageWithFallback {
+        Kirigami.Icon {
             property double specWidth: {
                 const allowedWidth = mainWindow.width - Kirigami.Units.largeSpacing * 4;
                 const allowedHeight = mainWindow.height - Kirigami.Units.largeSpacing * 8 - (minimizePlayer.height + bottomPlayerControls.height);
@@ -68,18 +69,9 @@ BasePlayerControl {
             Layout.maximumWidth: specWidth
             Layout.preferredHeight: specWidth
 
-            asynchronous: true
-            mipmap: true
-
-            source: trackPlayer.image
-            fallback: Qt.resolvedUrl(Theme.defaultAlbumImage)
-
-            sourceSize {
-                width: imageSourceSize * Screen.devicePixelRatio
-                height: imageSourceSize * Screen.devicePixelRatio
-            }
-
-            fillMode: Image.PreserveAspectFit
+            readonly property url image: trackPlayer.image
+            source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? "not-an-icon" : image
+            fallback: Theme.defaultAlbumImage
         }
 
         Item { Layout.fillHeight: true }
@@ -95,7 +87,7 @@ BasePlayerControl {
 
             LabelWithToolTip {
                 id: mainLabel
-                text: title
+                text: trackPlayer.title
                 wrapMode: Text.Wrap
                 Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
                 Layout.fillWidth: true
@@ -125,7 +117,7 @@ BasePlayerControl {
 
             LabelWithToolTip {
                 id: authorLabel
-                text: artist
+                text: trackPlayer.artist
                 visible: text.length > 0
                 wrapMode: Text.Wrap
                 Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
@@ -154,7 +146,7 @@ BasePlayerControl {
 
             LabelWithToolTip {
                 id: albumLabel
-                text: album
+                text: trackPlayer.album
                 visible: text.length > 0
                 wrapMode: Text.Wrap
                 Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
@@ -195,7 +187,7 @@ BasePlayerControl {
                     Layout.preferredHeight: Math.floor(Kirigami.Units.gridUnit * 3)
                     Layout.maximumWidth: height
                     Layout.preferredWidth: height
-                    text: i18nc("@action:button show track information", "Show Info")
+                    text: KI18n.i18nc("@action:button show track information", "Show Info")
                     icon.name: "documentinfo"
                     icon.color: "white"
                     onClicked: openNowPlaying()
@@ -210,9 +202,9 @@ BasePlayerControl {
 
                     text: {
                         const map = {
-                            [MediaPlayListProxyModel.NoShuffle]: i18nc("@info:tooltip", "Current: No shuffle"),
-                            [MediaPlayListProxyModel.Track]: i18nc("@info:tooltip", "Current: Shuffle tracks"),
-                            [MediaPlayListProxyModel.Album]: i18nc("@info:tooltip", "Current: Shuffle albums"),
+                            [MediaPlayListProxyModel.NoShuffle]: KI18n.i18nc("@info:tooltip", "Current: No shuffle"),
+                            [MediaPlayListProxyModel.Track]: KI18n.i18nc("@info:tooltip", "Current: Shuffle tracks"),
+                            [MediaPlayListProxyModel.Album]: KI18n.i18nc("@info:tooltip", "Current: Shuffle albums"),
                         }
                         return map[ElisaApplication.mediaPlayListProxyModel.shuffleMode]
                     }
@@ -236,20 +228,20 @@ BasePlayerControl {
                         ElisaApplication.mediaPlayListProxyModel.shuffleMode = (ElisaApplication.mediaPlayListProxyModel.shuffleMode + 1) % 3
                     }
                     onPressAndHold: {
-                        menu.popup()
+                        (menu as Menu).popup()
                     }
 
                     menu: Menu {
                         ShuffleModeItem {
-                            text: i18nc("@action:inmenu", "Track")
+                            text: KI18n.i18nc("@action:inmenu", "Track")
                             mode: MediaPlayListProxyModel.Track
                         }
                         ShuffleModeItem {
-                            text: i18nc("@action:inmenu", "Album")
+                            text: KI18n.i18nc("@action:inmenu", "Album")
                             mode: MediaPlayListProxyModel.Album
                         }
                         ShuffleModeItem {
-                            text: i18nc("@action:inmenu", "None")
+                            text: KI18n.i18nc("@action:inmenu", "None")
                             mode: MediaPlayListProxyModel.NoShuffle
                         }
                     }
@@ -263,9 +255,9 @@ BasePlayerControl {
                     Layout.preferredWidth: height
                     text: {
                         const map = {
-                            [MediaPlayListProxyModel.None]: i18nc("@info:tooltip", "Current: Don't repeat tracks"),
-                            [MediaPlayListProxyModel.One]: i18nc("@info:tooltip", "Current: Repeat current track"),
-                            [MediaPlayListProxyModel.Playlist]: i18nc("@info:tooltip", "Current: Repeat all tracks in playlist"),
+                            [MediaPlayListProxyModel.None]: KI18n.i18nc("@info:tooltip", "Current: Don't repeat tracks"),
+                            [MediaPlayListProxyModel.One]: KI18n.i18nc("@info:tooltip", "Current: Repeat current track"),
+                            [MediaPlayListProxyModel.Playlist]: KI18n.i18nc("@info:tooltip", "Current: Repeat all tracks in playlist"),
                         }
                         return map[ElisaApplication.mediaPlayListProxyModel.repeatMode]
                     }
@@ -289,20 +281,20 @@ BasePlayerControl {
                         ElisaApplication.mediaPlayListProxyModel.repeatMode = (ElisaApplication.mediaPlayListProxyModel.repeatMode + 1) % 3
                     }
                     onPressAndHold: {
-                        menu.popup()
+                        (menu as Menu).popup()
                     }
 
                     menu: Menu {
                         PlaylistModeItem {
-                            text: i18nc("@action:inmenu", "Playlist")
+                            text: KI18n.i18nc("@action:inmenu", "Playlist")
                             mode: MediaPlayListProxyModel.Playlist
                         }
                         PlaylistModeItem {
-                            text: i18nc("@action:inmenu", "One track")
+                            text: KI18n.i18nc("@action:inmenu", "One track")
                             mode: MediaPlayListProxyModel.One
                         }
                         PlaylistModeItem {
-                            text: i18nc("@action:inmenu", "None")
+                            text: KI18n.i18nc("@action:inmenu", "None")
                             mode: MediaPlayListProxyModel.None
                         }
                     }
@@ -310,6 +302,7 @@ BasePlayerControl {
             }
 
             // duration slider
+            // TODO: Make duration values locale-aware
             DurationSlider {
                 Layout.fillWidth: true
                 Layout.maximumHeight: Math.floor(Kirigami.Units.gridUnit * 3)
@@ -351,8 +344,8 @@ BasePlayerControl {
                     Layout.preferredHeight: Math.floor(Kirigami.Units.gridUnit * 3)
                     Layout.maximumWidth: height
                     Layout.preferredWidth: height
-                    enabled: skipBackwardEnabled
-                    text: i18nc("@action:button", "Skip Backward")
+                    enabled: trackPlayer.skipBackwardEnabled
+                    text: KI18n.i18nc("@action:button", "Skip Backward")
                     onClicked: trackPlayer.playPrevious()
                     icon.name: trackPlayer.LayoutMirroring.enabled ? "media-skip-forward" : "media-skip-backward"
                     icon.color: "white"
@@ -365,7 +358,7 @@ BasePlayerControl {
                     Layout.maximumWidth: height
                     Layout.preferredWidth: height
                     enabled: trackPlayer.playEnabled
-                    text: trackPlayer.isPlaying ? i18nc("@action:button Pause any media that is playing", "Pause") : i18nc("@action:button Start playing media", "Play")
+                    text: trackPlayer.isPlaying ? KI18n.i18nc("@action:button Pause any media that is playing", "Pause") : KI18n.i18nc("@action:button Start playing media", "Play")
                     onClicked: trackPlayer.isPlaying ? trackPlayer.pause() : trackPlayer.play()
                     icon.name: trackPlayer.isPlaying ? "media-playback-pause" : "media-playback-start"
                     icon.color: "white"
@@ -377,8 +370,8 @@ BasePlayerControl {
                     Layout.preferredHeight: Math.floor(Kirigami.Units.gridUnit * 3)
                     Layout.maximumWidth: height
                     Layout.preferredWidth: height
-                    enabled: skipForwardEnabled
-                    text: i18nc("@action:button", "Skip Forward")
+                    enabled: trackPlayer.skipForwardEnabled
+                    text: KI18n.i18nc("@action:button", "Skip Forward")
                     onClicked: trackPlayer.playNext()
                     icon.name: trackPlayer.LayoutMirroring.enabled ? "media-skip-backward" : "media-skip-forward"
                     icon.color: "white"
@@ -392,7 +385,7 @@ BasePlayerControl {
                     Layout.preferredHeight: Math.floor(Kirigami.Units.gridUnit * 3)
                     Layout.maximumWidth: height
                     Layout.preferredWidth: height
-                    text: i18nc("@action:button", "Show Playlist")
+                    text: KI18n.i18nc("@action:button", "Show Playlist")
                     onClicked: playlistDrawer.open()
                     icon.name: "view-media-playlist"
                     icon.color: "white"

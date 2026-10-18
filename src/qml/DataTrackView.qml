@@ -7,9 +7,9 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.15
+import QtQuick
 
-import org.kde.kirigami 2.12 as Kirigami
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 AbstractDataView {
@@ -58,7 +58,7 @@ AbstractDataView {
             if (Kirigami.Settings.isMobile) {
                 mainWindow.pageStack.layers.push(item);
             } else {
-                item.show();
+                (item as MediaTrackMetadataView).show();
             }
         }
     }
@@ -101,6 +101,17 @@ AbstractDataView {
                                                                      ElisaUtils.AfterCurrentTrack,
                                                                      ElisaUtils.DoNotTriggerPlay)
 
+        onReplaceAndPlay: url => {
+            // If we're a radio type then only enqueue the current track
+            if (dataType === ElisaUtils.Radio) {
+                ElisaApplication.mediaPlayListProxyModel.enqueue(model.fullData, model.display,
+                                                                 ElisaUtils.ReplacePlayList,
+                                                                 ElisaUtils.TriggerPlay);
+            } else {
+                listView.contentModel.replaceAndPlayOfPlayListFromTrackUrl(contentDirectoryView.model.rootIndex, url);
+            }
+        }
+
         onClicked: {
             forceActiveFocus()
             contentDirectoryView.currentIndex = model.index
@@ -113,22 +124,7 @@ AbstractDataView {
         }
 
         onCallOpenMetaDataView: (url, entryType) => {
-            openMetaDataView(databaseId, url, entryType)
-        }
-
-        Connections {
-            id: navigationBar
-            // Escalate to our parent, so we can replace the current playlist with this view's tracks.
-            function onReplaceAndPlay(url) {
-                // If we're a radio type then only enqueue the current track
-                if (dataType === ElisaUtils.Radio) {
-                    ElisaApplication.mediaPlayListProxyModel.enqueue(model.fullData, model.display,
-                        ElisaUtils.ReplacePlayList,
-                        ElisaUtils.TriggerPlay)
-                } else {
-                    listView.contentModel.replaceAndPlayOfPlayListFromTrackUrl(contentDirectoryView.model.rootIndex, url)
-                }
-            }
+            listView.openMetaDataView(listView.databaseId, url, entryType)
         }
     }
 
@@ -141,16 +137,16 @@ AbstractDataView {
 
         reuseItems: true
 
-        model: delegateModel
+        model: listView.delegateModel
 
         // HACK: setting currentIndex to -1 in mobile for some reason causes segfaults, no idea why
         currentIndex: Kirigami.Settings.isMobile ? 0 : -1
 
         Accessible.role: Accessible.List
-        Accessible.name: mainTitle
-        Accessible.description: secondaryTitle
+        Accessible.name: listView.mainTitle
+        Accessible.description: listView.secondaryTitle
 
-        section.property: showSection ? "discNumber" : ""
+        section.property: listView.showSection ? "discNumber" : ""
         section.criteria: ViewSection.FullString
         section.labelPositioning: ViewSection.InlineLabels
         section.delegate: TracksDiscHeader {
@@ -165,14 +161,14 @@ AbstractDataView {
     }
 
     Connections {
-        target: navigationBar // lives in parent item
+        target: listView.navigationBar // lives in parent item
 
         function onCreateRadio() {
             listView.openCreateRadioView()
         }
 
         function onShowArtist(name: string) {
-            viewManager.openArtistView(name)
+            listView.viewManager.openArtistView(name)
         }
     }
 }

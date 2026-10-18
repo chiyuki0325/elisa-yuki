@@ -94,12 +94,9 @@ ElisaApplication::ElisaApplication(QObject *parent) : QObject(parent), d(std::ma
 {
     auto configurationFileName = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
     configurationFileName += QStringLiteral("/elisarc");
-    Elisa::ElisaConfiguration::instance(configurationFileName);
-    Elisa::ElisaConfiguration::self()->load();
-    Elisa::ElisaConfiguration::self()->save();
     d->mSchemes = KColorSchemeManager::instance();
 
-    d->mConfigFileWatcher.addPath(Elisa::ElisaConfiguration::self()->config()->name());
+    d->mConfigFileWatcher.addPath(configurationFileName);
 
     connect(Elisa::ElisaConfiguration::self(), &Elisa::ElisaConfiguration::configChanged,
             this, &ElisaApplication::configChanged);
@@ -182,6 +179,12 @@ void ElisaApplication::setupActions()
         auto togglePlaylistAction = d->mCollection.addAction(actionName, this, &ElisaApplication::togglePlaylist);
         togglePlaylistAction->setShortcut(QKeySequence(Qt::Key_F9));
         togglePlaylistAction->setText(i18nc("@action", "Toggle Playlist"));
+    }
+
+    actionName = u"clear_playlist"_s;
+    if (KAuthorized::authorizeAction(actionName)) {
+        auto clearPlaylistAction = d->mCollection.addAction(actionName, this, &ElisaApplication::clearPlaylist);
+        clearPlaylistAction->setText(i18nc("@action", "Clear Playlist"));
     }
 
     actionName = u"Seek"_s;

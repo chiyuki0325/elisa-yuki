@@ -24,6 +24,7 @@ public:
     QList<ViewParameters> mViewsParameters = {{{i18nc("@title:window Title of the view of the playlist", "Now Playing")},
                                                QUrl{QStringLiteral("image://icon/view-media-lyrics")},
                                                ViewManager::ContextView},
+
                                               {{i18nc("@title:window Title of the view of recently played tracks", "Recently Played")},
                                                QUrl{QStringLiteral("image://icon/media-playlist-play")},
                                                ViewManager::TrackView,
@@ -37,6 +38,7 @@ public:
                                                {i18nc("@item:inmenu", "Least Recently Played First"), i18nc("@item:inmenu", "Most Recently Played First")},
                                                ViewManager::MultipleAlbum,
                                                ViewManager::NoDiscHeaders},
+
                                               {{i18nc("@title:window Title of the view of frequently played tracks", "Frequently Played")},
                                                QUrl{QStringLiteral("image://icon/view-media-playcount")},
                                                ViewManager::TrackView,
@@ -50,6 +52,7 @@ public:
                                                {i18nc("@item:inmenu", "Least Frequently Played First"), i18nc("@item:inmenu", "Most Frequently Played First")},
                                                ViewManager::MultipleAlbum,
                                                ViewManager::NoDiscHeaders},
+
                                               {{i18nc("@title:window Title of the view of all albums", "Albums")},
                                                QUrl{QStringLiteral("image://icon/view-media-album-cover")},
                                                ViewManager::GridView,
@@ -61,9 +64,10 @@ public:
                                                {i18nc("@title:menu", "Title"), i18nc("@title:menu", "Artist"), i18nc("@title:menu", "Genre"), i18nc("@title:menu", "Year")},
                                                Qt::AscendingOrder,
                                                {i18nc("@item:inmenu", "A–Z"), i18nc("@item:inmenu", "Z–A"), i18nc("@item:inmenu", "A–Z"), i18nc("@item:inmenu", "Z–A"), i18nc("@item:inmenu", "A–Z"), i18nc("@item:inmenu", "Z–A"), i18nc("@item:inmenu", "Oldest First"), i18nc("@item:inmenu", "Newest First")},
-                                               QUrl{QStringLiteral("image://icon/media-default-album")},
+                                               QUrl{QStringLiteral("media-default-album")},
                                                ViewManager::DelegateWithSecondaryText,
                                                ViewManager::ViewShowRating},
+
                                               {{i18nc("@title:window Title of the view of all artists", "Artists")},
                                                QUrl{QStringLiteral("image://icon/view-media-artist")},
                                                ViewManager::GridView,
@@ -75,9 +79,10 @@ public:
                                                {i18nc("@title:menu", "Name")},
                                                Qt::AscendingOrder,
                                                {i18nc("@item:inmenu", "A–Z"), i18nc("@item:inmenu", "Z–A")},
-                                               QUrl{QStringLiteral("image://icon/view-media-artist")},
+                                               QUrl{QStringLiteral("view-media-artist")},
                                                ViewManager::DelegateWithoutSecondaryText,
                                                ViewManager::ViewHideRating},
+
                                               {{i18nc("@title:window Title of the view of all tracks", "Tracks")},
                                                QUrl{QStringLiteral("image://icon/view-media-track")},
                                                ViewManager::TrackView,
@@ -98,6 +103,7 @@ public:
                                                 i18nc("@item:inmenu", "Oldest First"), i18nc("@item:inmenu", "Newest First")},
                                                ViewManager::MultipleAlbum,
                                                ViewManager::NoDiscHeaders},
+
                                               {{i18nc("@title:window Title of the view of all genres", "Genres")},
                                                QUrl{QStringLiteral("image://icon/view-media-genre")},
                                                ViewManager::GridView,
@@ -109,20 +115,22 @@ public:
                                                {i18nc("@title:menu", "Genre")},
                                                Qt::AscendingOrder,
                                                {i18nc("@item:inmenu", "A–Z"), i18nc("@item:inmenu", "Z–A")},
-                                               QUrl{QStringLiteral("image://icon/view-media-genre")},
+                                               QUrl{QStringLiteral("view-media-genre")},
                                                ViewManager::DelegateWithoutSecondaryText,
                                                ViewManager::ViewHideRating},
+
                                               {{i18nc("@title:window Title of the file browser view", "Files")},
                                                QUrl{QStringLiteral("image://icon/document-open-folder")},
                                                ViewManager::GridView,
                                                ViewManager::FileBrowserModel,
                                                ElisaUtils::NoFilter,
                                                ElisaUtils::FileName,
-                                               QUrl{QStringLiteral("image://icon/document-open-folder")},
+                                               QUrl{QStringLiteral("audio-mp3")},
                                                ViewManager::DelegateWithoutSecondaryText,
                                                ViewManager::ViewHideRating,
                                                QUrl::fromLocalFile(QDir::rootPath())
                                               },
+
                                               {{i18nc("@title:window Title of the file radios browser view", "Radio Stations")},
                                                QUrl{QStringLiteral("image://icon/radio")},
                                                ViewManager::TrackView,

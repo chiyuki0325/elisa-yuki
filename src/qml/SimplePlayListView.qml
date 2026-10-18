@@ -7,9 +7,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls 2.2
+import QtQuick.Controls
 
-import org.kde.kirigami 2.5 as Kirigami
+import org.kde.kirigami as Kirigami
 
 import org.kde.elisa
 
@@ -64,7 +64,7 @@ ScrollView {
 
             width: playListView.width
 
-            // album seperator
+            // album separator
             Item {
                 width: playListView.width
                 height: Kirigami.Units.smallSpacing

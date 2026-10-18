@@ -7,11 +7,12 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import QtQuick.Controls 2.2
-import QtQuick.Window 2.2
-import QtQuick.Layouts 1.2
-import org.kde.kirigami 2.5 as Kirigami
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
+import QtQuick.Layouts
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 Window {
@@ -33,8 +34,8 @@ Window {
     LayoutMirroring.enabled: Application.layoutDirection == Qt.RightToLeft
     LayoutMirroring.childrenInherit: true
 
-    title: isCreating ? i18nc("@title:window", "Create a Radio") :
-                        i18nc("@title:window", "View details")
+    title: isCreating ? KI18n.i18nc("@title:window", "Create a Radio") :
+                        KI18n.i18nc("@title:window", "View details")
 
     EditableTrackMetadataModel {
         id: realModel
@@ -54,7 +55,7 @@ Window {
     // Close when pressing Esc key
     Shortcut {
         sequence: StandardKey.Cancel
-        onActivated: close()
+        onActivated: trackMetadata.close()
     }
 
     onClosing: close => {
@@ -85,7 +86,7 @@ Window {
             // file location
             RowLayout {
                 id: fileNameRow
-                visible: showTrackFileName
+                visible: trackMetadata.showTrackFileName
                 Layout.topMargin: Kirigami.Units.largeSpacing
                 Layout.leftMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
                 Layout.rightMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
@@ -122,10 +123,10 @@ Window {
                     Layout.minimumHeight: implicitHeight
                     alignment: Qt.AlignLeft
 
-                    visible: showDeleteButton && !isCreating
+                    visible: trackMetadata.showDeleteButton && !trackMetadata.isCreating
 
                     Button {
-                        text: i18nc("@action:button", "Delete")
+                        text: KI18n.i18nc("@action:button", "Delete")
                         icon.name: 'delete'
                         DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
                         onClicked: metadataForm.deleteItem()
@@ -137,13 +138,13 @@ Window {
                     Layout.minimumHeight: implicitHeight
                     alignment: Qt.AlignRight
 
-                    visible: !isModifying && !isCreating
+                    visible: !trackMetadata.isModifying && !trackMetadata.isCreating
                     standardButtons: DialogButtonBox.Ok
 
                     onAccepted: metadataForm.close()
 
                     Button {
-                        text: i18nc("@action:button", "Modify")
+                        text: KI18n.i18nc("@action:button", "Modify")
                         icon.name: 'document-edit'
                         DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                         onClicked: metadataForm.isModifying = true
@@ -182,10 +183,10 @@ Window {
         target: ElisaApplication
 
         function onMusicManagerChanged() {
-            if (isCreating) {
+            if (trackMetadata.isCreating) {
                 realModel.initializeForNewRadio()
             } else {
-                realModel.initializeByUrl(modelType, fileName)
+                realModel.initializeByUrl(trackMetadata.modelType, trackMetadata.fileName)
             }
         }
     }

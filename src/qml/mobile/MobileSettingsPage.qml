@@ -8,11 +8,10 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.11
-import QtQuick.Layouts 1.12
-import QtQuick.Window 2.12
+import QtQuick
 
-import org.kde.kirigami 2.14 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 
 import org.kde.elisa
 
@@ -23,7 +22,7 @@ import ".."
 Kirigami.ScrollablePage {
     id: settingsPage
 
-    title: i18nc("@title:window", "Settings")
+    title: KI18n.i18nc("@title:window", "Settings")
 
     globalToolBarStyle: Kirigami.ApplicationHeaderStyle.Titles
 
@@ -37,13 +36,13 @@ Kirigami.ScrollablePage {
     actions: [
         Kirigami.Action {
             icon.name: "dialog-ok-apply"
-            text: i18nc("@action:button", "Save")
+            text: KI18n.i18nc("@action:button", "Save")
             onTriggered: settingsForm.saveAndCloseForm()
             enabled: ElisaConfigurationDialog.isDirty
         },
         Kirigami.Action {
             icon.name: "dialog-cancel"
-            text: i18nc("@action:button", "Cancel")
+            text: KI18n.i18nc("@action:button", "Cancel")
             onTriggered: settingsForm.discardAndCloseForm()
         }
     ]

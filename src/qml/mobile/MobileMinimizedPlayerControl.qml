@@ -9,11 +9,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.7
-import QtQuick.Window 2.2
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Window
 import QtQuick.Effects as FX
-import org.kde.kirigami 2.5 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 import ".."
@@ -36,11 +37,11 @@ BasePlayerControl {
     property bool isWidescreen: mainWindow.width >= Theme.viewSelectorSmallSizeThreshold
 
     // background image
-    ImageWithFallback {
+    Image {
         id: oldBackground
 
-        source: image
-        fallback: Theme.defaultBackgroundImage
+        readonly property url image: musicWidget.image
+        source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? Theme.defaultBackgroundImage : image
         asynchronous: true
 
         anchors.fill: parent
@@ -114,22 +115,12 @@ BasePlayerControl {
                     Layout.maximumHeight: imageSize
                     Layout.minimumHeight: imageSize
 
-                    ImageWithFallback {
+                    Kirigami.Icon {
                         id: mainIcon
                         anchors.fill: parent
-
-                        asynchronous: true
-                        mipmap: true
-
-                        source: image
-                        fallback: Qt.resolvedUrl(Theme.defaultAlbumImage)
-
-                        sourceSize {
-                            width: imageSourceSize * Screen.devicePixelRatio
-                            height: imageSourceSize * Screen.devicePixelRatio
-                        }
-
-                        fillMode: Image.PreserveAspectFit
+                        readonly property url image: musicWidget.image
+                        source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? "not-an-icon" : image
+                        fallback: Theme.defaultAlbumImage
                     }
                 }
 
@@ -139,7 +130,7 @@ BasePlayerControl {
                     Layout.fillWidth: true
                     Label {
                         id: mainLabel
-                        text: title
+                        text: musicWidget.title
                         textFormat: Text.PlainText
                         wrapMode: Text.Wrap
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
@@ -157,7 +148,7 @@ BasePlayerControl {
 
                     Label {
                         id: authorLabel
-                        text: artist
+                        text: musicWidget.artist
                         textFormat: Text.PlainText
                         wrapMode: Text.Wrap
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
@@ -187,6 +178,7 @@ BasePlayerControl {
             Layout.fillWidth: true
 
             // duration slider for widescreen
+            // TODO: Make duration values locale-aware
             DurationSlider {
                 anchors.fill: parent
                 Layout.fillWidth: true
@@ -219,8 +211,8 @@ BasePlayerControl {
             Layout.preferredHeight: Kirigami.Units.gridUnit * 3
             Layout.maximumWidth: height
             Layout.preferredWidth: height
-            enabled: skipBackwardEnabled
-            text: i18nc("@action:button", "Skip Backward")
+            enabled: musicWidget.skipBackwardEnabled
+            text: KI18n.i18nc("@action:button", "Skip Backward")
             onClicked: musicWidget.playPrevious()
             icon.name: musicWidget.LayoutMirroring.enabled ? "media-skip-forward" : "media-skip-backward"
             icon.color: "white"
@@ -233,8 +225,8 @@ BasePlayerControl {
             Layout.preferredHeight: Kirigami.Units.gridUnit * 3
             Layout.maximumWidth: height
             Layout.preferredWidth: height
-            enabled: playEnabled
-            text: musicWidget.isPlaying ? i18nc("@action:button Pause any media that is playing", "Pause") : i18nc("@action:button Start playing media", "Play")
+            enabled: musicWidget.playEnabled
+            text: musicWidget.isPlaying ? KI18n.i18nc("@action:button Pause any media that is playing", "Pause") : KI18n.i18nc("@action:button Start playing media", "Play")
             onClicked: musicWidget.isPlaying ? musicWidget.pause() : musicWidget.play()
             icon.name: musicWidget.isPlaying ? "media-playback-pause" : "media-playback-start"
             icon.color: "white"
@@ -247,8 +239,8 @@ BasePlayerControl {
             Layout.preferredHeight: Kirigami.Units.gridUnit * 3
             Layout.maximumWidth: height
             Layout.preferredWidth: height
-            enabled: skipForwardEnabled
-            text: i18nc("@action:button", "Skip Forward")
+            enabled: musicWidget.skipForwardEnabled
+            text: KI18n.i18nc("@action:button", "Skip Forward")
             onClicked: musicWidget.playNext()
             icon.name: musicWidget.LayoutMirroring.enabled ? "media-skip-backward" : "media-skip-forward"
             icon.color: "white"

@@ -5,6 +5,7 @@
 include_directories(${elisa_BINARY_DIR})
 
 set(elisaLib_SOURCES
+    audiowrapper_dragon.cpp
     colorschemepreviewimageprovider.cpp
     mediaplaylist.cpp
     mediaplaylistproxymodel.cpp
@@ -41,6 +42,7 @@ set(elisaLib_SOURCES
     viewslistdata.cpp
     viewconfigurationdata.cpp
     localFileConfiguration/elisaconfigurationdialog.cpp
+    playlistparser.cpp
 )
 
 set(elisaLib_INCLUDEDIRS
@@ -114,31 +116,12 @@ ecm_qt_declare_logging_category(elisaLib_SOURCES
     DEFAULT_SEVERITY Info
     )
 
-if (LIBVLC_FOUND)
-    ecm_qt_declare_logging_category(elisaLib_SOURCES
-        HEADER "vlcLogging.h"
-        IDENTIFIER "orgKdeElisaPlayerVlc"
-        CATEGORY_NAME "org.kde.elisa.player.vlc"
-        DEFAULT_SEVERITY Info
-        )
-
-    set(elisaLib_SOURCES
-        ${elisaLib_SOURCES}
-        audiowrapper_libvlc.cpp
-        )
-else()
-    ecm_qt_declare_logging_category(elisaLib_SOURCES
-        HEADER "qtMultimediaLogging.h"
-        IDENTIFIER "orgKdeElisaPlayerQtMultimedia"
-        CATEGORY_NAME "org.kde.elisa.player.qtMultimedia"
-        DEFAULT_SEVERITY Info
-        )
-
-    set(elisaLib_SOURCES
-        ${elisaLib_SOURCES}
-        audiowrapper_qtmultimedia.cpp
-        )
-endif()
+ecm_qt_declare_logging_category(elisaLib_SOURCES
+    HEADER "dragonLogging.h"
+    IDENTIFIER "orgKdeElisaPlayerDragon"
+    CATEGORY_NAME "org.kde.elisa.player.dragon"
+    DEFAULT_SEVERITY Info
+    )
 
 if (WIN32)
     ecm_qt_declare_logging_category(elisaLib_SOURCES
@@ -276,17 +259,15 @@ if (Qt6DBus_FOUND)
     endif()
 endif()
 
-if (LIBVLC_FOUND)
-    target_include_directories(elisaLib
-        PRIVATE
-        ${LIBVLC_INCLUDE_DIR}
-        )
+target_link_libraries(elisaLib
+    LINK_PRIVATE
+    DragonMediaBackend::DragonMediaBackend
+    )
 
-    target_link_libraries(elisaLib
-        LINK_PRIVATE
-        ${LIBVLC_LIBRARY}
-        )
-endif()
+set_source_files_properties(audiowrapper_dragon.cpp PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+)
 
 if (ANDROID)
     target_link_libraries(elisaLib PRIVATE Qt6::CorePrivate Qt6::Quick jnigraphics)
@@ -320,10 +301,6 @@ set_source_files_properties(android/PlatformIntegration.qml PROPERTIES
     QT_RESOURCE_ALIAS qml/+android/PlatformIntegration.qml
 )
 
-set_source_files_properties(android/qtquickcontrols2.conf PROPERTIES
-    QT_RESOURCE_ALIAS qml/+android/qtquickcontrols2.conf
-)
-
 set_source_files_properties(qml/Theme.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
@@ -353,9 +330,9 @@ qt_add_qml_module(elisaLib
         qml/FooterBar.qml
         qml/GridBrowserDelegate.qml
         qml/HeaderBar.qml
-        qml/ImageWithFallback.qml
         qml/LabelWithToolTip.qml
         qml/ListBrowserDelegate.qml
+        qml/LyricsView.qml
         qml/MediaPlayerControl.qml
         qml/MediaPlayListView.qml
         qml/MediaTrackMetadataDelegate.qml
@@ -394,7 +371,8 @@ qt_add_qml_module(elisaLib
         qml/shared/BasePlayListDelegate.qml
     RESOURCES
         background.png
-        qtquickcontrols2.conf
+    OUTPUT_DIRECTORY
+        ${CMAKE_BINARY_DIR}/src/org/kde/elisa
     )
 
 if (Qt6Quick_FOUND AND Qt6Widgets_FOUND)
@@ -417,14 +395,13 @@ if (Qt6Quick_FOUND AND Qt6Widgets_FOUND)
 
     add_executable(elisa ${elisa_SOURCES})
 
-    target_include_directories(elisa PRIVATE ${KDSoap_INCLUDE_DIRS})
-
     target_link_libraries(elisa
         LINK_PRIVATE
         elisaLib
         Qt::Widgets Qt::QuickControls2
-        KF6::I18n KF6::CoreAddons KF6::ConfigCore KF6::ConfigGui
+        KF6::I18n KF6::I18nQml KF6::CoreAddons KF6::ConfigCore KF6::ConfigGui
         KF6::IconThemes
+        KirigamiApp
         )
 
     if (ANDROID)
@@ -529,8 +506,8 @@ if (ANDROID)
         documentinfo
         folder
         radio
-        rating-unrated
-        rating
+        non-starred
+        starred
         media-playback-playing
         media-playback-paused
         settings-configure
@@ -538,3 +515,5 @@ if (ANDROID)
     )
     ecm_add_android_apk(elisa ANDROID_DIR ${CMAKE_SOURCE_DIR}/android)
 endif()
+
+install(FILES elisa_core.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR})

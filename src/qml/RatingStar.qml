@@ -7,9 +7,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls 2.15 as QQC2
+import QtQuick.Controls as QQC2
 import QtQuick.Effects as FX
-import org.kde.kirigami 2.5 as Kirigami
+import org.kde.kirigami as Kirigami
 
 QQC2.Control {
     id: control
@@ -19,6 +19,9 @@ QQC2.Control {
 
     property double hoverBrightness: 0
     property double hoverContrast: -0.3
+
+    property bool highlighted
+    property color iconColor: palette.text
 
     readonly property int hoveredStar: mouseArea.containsMouse ? Math.ceil(5 * mouseArea.mouseX / mouseArea.width) : 0
     readonly property int hoveredRating: 2 * hoveredStar
@@ -97,11 +100,14 @@ QQC2.Control {
 
                     animated: false
                     source: (control.starRating >= delegate.ratingThreshold || control.hoveredRating >= delegate.ratingThreshold)
-                        ? Qt.resolvedUrl(Theme.ratingIcon)
-                        : Qt.resolvedUrl(Theme.ratingUnratedIcon)
+                        ? "starred"
+                        : "non-starred"
 
                     opacity: (control.starRating >= delegate.ratingThreshold || control.hoveredRating >= delegate.ratingThreshold)
                         ? 1 : 0.7
+
+                    selected: control.highlighted
+                    color: control.iconColor
                 }
             }
         }

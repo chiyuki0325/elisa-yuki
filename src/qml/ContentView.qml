@@ -6,11 +6,11 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
+import QtQuick
 import QtQuick.Controls
-import QtQuick.Window 2.2
+import QtQuick.Window
 import org.kde.elisa
-import org.kde.kirigami 2.8 as Kirigami
+import org.kde.kirigami as Kirigami
 
 SplitView {
     id: contentViewContainer
@@ -64,7 +64,7 @@ SplitView {
         onViewIndexChanged: contentViewContainer.viewIndexChanged()
 
         onOpenGridView: configurationData => {
-            openViewCommon(dataGridView, {
+            contentViewContainer.openViewCommon(dataGridView, {
                 filterType: configurationData.filterType,
                 mainTitle: configurationData.mainTitle,
                 secondaryTitle: configurationData.secondaryTitle,
@@ -89,7 +89,7 @@ SplitView {
         }
 
         onOpenTrackView: configurationData => {
-            openViewCommon(dataTrackView, {
+            contentViewContainer.openViewCommon(dataTrackView, {
                 filterType: configurationData.filterType,
                 isSubPage: configurationData.expectedDepth > 1,
                 mainTitle: configurationData.mainTitle,
@@ -103,10 +103,8 @@ SplitView {
                 sortOrder: configurationData.sortOrder,
                 displaySingleAlbum: configurationData.displaySingleAlbum,
                 showSection: configurationData.showDiscHeaders,
-                sortRole: configurationData.sortRole,
                 sortRoles: configurationData.sortRoles,
                 sortRoleNames: configurationData.sortRoleNames,
-                sortOrder: configurationData.sortOrder,
                 sortOrderNames: configurationData.sortOrderNames,
                 viewManager: viewManager,
                 opacity: 1,
@@ -114,7 +112,7 @@ SplitView {
         }
 
         onSwitchContextView: (expectedDepth, mainTitle, imageUrl) => {
-            openViewCommon(albumContext, {opacity: 1}, expectedDepth)
+            contentViewContainer.openViewCommon(albumContext, {opacity: 1}, expectedDepth)
         }
 
         onPopOneView: {
@@ -153,8 +151,8 @@ SplitView {
         active: !Kirigami.Settings.isMobile
         visible: active
 
-        SplitView.minimumWidth: active ? item.iconsOnlyMinWidth : 0
-        SplitView.preferredWidth: active ? item.wideWidth : 0
+        SplitView.minimumWidth: active ? (item as ViewSelector).iconsOnlyMinWidth : 0
+        SplitView.preferredWidth: active ? (item as ViewSelector).wideWidth : 0
 
         function updateSidebarIndex() {
             if (status === Loader.Ready) {
@@ -163,6 +161,7 @@ SplitView {
         }
 
         sourceComponent: ViewSelector {
+            displayedViewIndex: model.mapRowFromSource(viewManager.viewIndex)
             model: pageProxyModel
             viewIndex: model.mapRowFromSource(viewManager.viewIndex)
             onSwitchView: viewIndex => viewManager.openView(model.mapRowToSource(viewIndex))
@@ -183,12 +182,6 @@ SplitView {
 
         SplitView.fillWidth: true
         SplitView.minimumWidth: Kirigami.Settings.isMobile ? mainWindow.minimumWidth : Theme.contentViewMinimumSize
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.BackButton
-            onClicked: goBack()
-        }
 
         StackView {
             id: browseStackView
@@ -287,15 +280,11 @@ SplitView {
                 name: "playlistVisible"
                 when: mainWindow.isWideScreen && contentViewContainer.showPlaylist
                 PropertyChanges {
-                    target: playListContainer
-                    visible: true
-                    SplitView.minimumWidth: 10 * Kirigami.Units.gridUnit
-                    SplitView.preferredWidth: hiddenCachedWidth
-                    preferredWidth: SplitView.preferredWidth
-                }
-                PropertyChanges {
-                    target: playList
-                    width: playListContainer.width
+                    playListContainer.visible: true
+                    playListContainer.SplitView.minimumWidth: 10 * Kirigami.Units.gridUnit
+                    playListContainer.SplitView.preferredWidth: playListContainer.hiddenCachedWidth
+                    playListContainer.preferredWidth: playListContainer.SplitView.preferredWidth
+                    playList.width: playListContainer.width
                 }
             }
         ]
@@ -320,7 +309,7 @@ SplitView {
         id: dataGridView
 
         DataGridView {
-            expandedFilterView: showExpandedFilterView
+            expandedFilterView: contentViewContainer.showExpandedFilterView
         }
     }
 
@@ -328,7 +317,7 @@ SplitView {
         id: dataTrackView
 
         DataTrackView {
-            expandedFilterView: showExpandedFilterView
+            expandedFilterView: contentViewContainer.showExpandedFilterView
         }
     }
 
@@ -348,5 +337,11 @@ SplitView {
             onOpenArtist: contentViewContainer.openArtist(artistName)
             onOpenAlbum: contentViewContainer.openAlbum(albumName, albumArtist, albumArtUrl, albumId)
         }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.BackButton
+        onClicked: contentViewContainer.goBack()
     }
 }

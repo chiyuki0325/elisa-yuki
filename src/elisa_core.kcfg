@@ -5,11 +5,9 @@
       http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
  <include>QDir</include>
  <include>QStandardPaths</include>
- <kcfgfile arg="true" />
+ <kcfgfile name="elisarc" />
  <group name="ElisaFileIndexer">
   <entry key="RootPath" type="PathList" >
-  </entry>
-  <entry key="ForceUsageOfFastFileSearch" type="Bool" >
   </entry>
  </group>
  <group name="PlayerSettings">

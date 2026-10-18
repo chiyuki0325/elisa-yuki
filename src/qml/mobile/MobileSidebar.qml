@@ -6,10 +6,9 @@
 
 pragma ComponentBehavior: Bound
 
-import org.kde.kirigami 2.11 as Kirigami
-import QtQuick 2.12
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.1
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
+import QtQuick
 
 Kirigami.GlobalDrawer {
     id: drawer
@@ -19,7 +18,7 @@ Kirigami.GlobalDrawer {
 
     property int viewIndex: 0
 
-    title: i18nc("@title:window", "Elisa")
+    title: KI18n.i18nc("@title:window", "Elisa")
     titleIcon: "elisa"
 
     // disable default handle as it covers content, also we implement our own handle for pages
@@ -35,8 +34,8 @@ Kirigami.GlobalDrawer {
     }
 
     Component.onCompleted: {
-        const settings = action.createObject(drawer, {"icon.name": "settings-configure", text: i18nc("@title:window", "Settings")});
-        settings.onTriggered.connect(() => {
+        const settings = action.createObject(drawer, {"icon.name": "settings-configure", text: KI18n.i18nc("@title:window", "Settings")}) as Kirigami.Action;
+        settings.triggered.connect(() => {
             mainWindow.pageStack.layers.push("MobileSettingsPage.qml");
         });
         drawer.actions.push(settings);
@@ -54,10 +53,10 @@ Kirigami.GlobalDrawer {
                 // HACK: the images provided by the model are in the form "image://icon/view-media-genre"
                 // remove the "image://icon/" in order to use icons
                 const icon = String(image).substring(13);
-                const object = action.createObject(drawer, {"icon.name": icon, text: title});
-                object.onTriggered.connect(() => {
-                    viewIndex = index;
-                    switchView(index);
+                const object = action.createObject(drawer, {"icon.name": icon, text: title}) as Kirigami.Action;
+                object.triggered.connect(() => {
+                    drawer.viewIndex = index;
+                    drawer.switchView(index);
                 });
                 drawer.actions.push(object);
             }

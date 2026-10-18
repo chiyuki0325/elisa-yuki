@@ -7,11 +7,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls 2.4
-import org.kde.kirigami 2.10 as Kirigami
+import QtQuick.Controls
+import org.kde.kirigami as Kirigami
 
 ScrollView {
     id: scrollView
+
+    // The index of the view being displayed, not the one that is "highlighted" by the ListView
+    required property int displayedViewIndex
 
     property alias model: viewModeView.model
 
@@ -50,22 +53,34 @@ ScrollView {
             required property string title
             required property url image
 
+            readonly property bool usingThemeIcon: delegate.image.toString().startsWith("image://icon/")
+
             width: viewModeView.width
 
+            // We need to pass theme icons (i.e. not cover images) by icon.name so that Kirigami.Icon
+            // applies the correct color when the delegate is highlighted.
+            // HACK: the images provided by the model are in the form "image://icon/view-media-genre"
+            // remove the "image://icon/" in order to use icons.
+            icon.name: usingThemeIcon ? delegate.image.toString().substring(13) : ""
             icon.source: image
             text: title
-            highlighted: ListView.isCurrentItem
+            highlighted: index === scrollView.displayedViewIndex
 
             // Prevent icon recoloring for styles that don't set `icon.color: "transparent"` by default
             // otherwise it applies a single-color mask above the entire album cover image
             Binding {
-                when: !delegate.image.toString().startsWith("image://icon/")
+                when: !delegate.usingThemeIcon
                 delegate.icon.color: "transparent"
             }
 
             onClicked: {
                 scrollView.switchView(index)
                 forceActiveFocus()
+            }
+
+            Keys.onReturnPressed: {
+                scrollView.switchView(index);
+                forceActiveFocus();
             }
         }
 

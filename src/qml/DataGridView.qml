@@ -7,11 +7,12 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.15
+import QtQuick
 
 import QtQml.Models
 
-import org.kde.kirigami 2.12 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 AbstractDataView {
@@ -84,7 +85,7 @@ AbstractDataView {
             secondaryText: delegatePackage.secondaryText ? delegatePackage.secondaryText : ""
             imageUrl: delegatePackage.imageUrl ? delegatePackage.imageUrl : ""
             multipleImageUrls: delegatePackage.multipleImageUrls
-            imageFallbackUrl: defaultIcon
+            imageFallbackUrl: gridView.defaultIcon
             displaySecondaryText: gridView.delegateDisplaySecondaryText
             hasChildren: delegatePackage.hasChildren
 
@@ -115,7 +116,7 @@ AbstractDataView {
             secondaryText: delegatePackage.secondaryText ? delegatePackage.secondaryText : ""
             imageUrl: delegatePackage.imageUrl ? delegatePackage.imageUrl : ""
             multipleImageUrls: delegatePackage.multipleImageUrls
-            imageFallbackUrl: defaultIcon
+            imageFallbackUrl: gridView.defaultIcon
             displaySecondaryText: gridView.delegateDisplaySecondaryText
             hasChildren: delegatePackage.hasChildren
 
@@ -146,7 +147,7 @@ AbstractDataView {
         currentIndex: Kirigami.Settings.isMobile ? 0 : -1
 
         Accessible.role: Accessible.List
-        Accessible.name: mainTitle
+        Accessible.name: gridView.mainTitle
 
         header: Loader {
             active: (gridView.realModel ? !gridView.realModel.isBusy : false) &&
@@ -158,8 +159,8 @@ AbstractDataView {
                 width: contentDirectoryView.width
                 hideActions: true
                 hasChildren: true
-                mainText: i18nc("@item:intable View all tracks", "All tracks")
-                secondaryText: i18ncp("@item:intable number of tracks/songs in all albums", "%1 track", "%1 tracks", gridView.contentModel.tracksCount)
+                mainText: KI18n.i18nc("@item:intable View all tracks", "All tracks")
+                secondaryText: KI18n.i18ncp("@item:intable number of tracks/songs in all albums", "%1 track", "%1 tracks", gridView.contentModel.tracksCount)
                 imageFallbackUrl: Theme.trackIcon
                 onOpen: gridView.viewManager.openTracksView(gridView.mainTitle)
             }

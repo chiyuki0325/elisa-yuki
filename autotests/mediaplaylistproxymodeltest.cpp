@@ -8,10 +8,11 @@
 #include "mediaplaylistproxymodeltest.h"
 #include "mediaplaylisttestconfig.h"
 
+#include "databaseinterface.h"
 #include "datatypes.h"
 #include "mediaplaylist.h"
 #include "mediaplaylistproxymodel.h"
-#include "databaseinterface.h"
+#include "playlistparser.h"
 #include "trackslistener.h"
 
 #include "elisa_settings.h"
@@ -42,6 +43,17 @@ static void validateTracks(const QAbstractItemModel *const playListModel, const 
     }
 };
 
+QList<QString> createdFiles;
+static QUrl createTemporaryFile(const QString &fileName, const QString &contents)
+{
+    QFile file(QDir::tempPath() + QStringLiteral("/") + fileName);
+    file.open(QIODeviceBase::WriteOnly | QIODeviceBase::Truncate);
+    file.write(contents.toUtf8());
+    const auto url = QUrl::fromLocalFile(file.fileName());
+    createdFiles.append(url.toLocalFile());
+    return url;
+}
+
 MediaPlayListProxyModelTest::MediaPlayListProxyModelTest(QObject *parent) : QObject(parent)
 {
 }
@@ -52,7 +64,6 @@ void MediaPlayListProxyModelTest::initTestCase()
     qRegisterMetaType<QList<qlonglong>>("QList<qlonglong>");
     qRegisterMetaType<QHash<qlonglong,int>>("QHash<qlonglong,int>");
     qRegisterMetaType<ElisaUtils::PlayListEntryType>("PlayListEntryType");
-    Elisa::ElisaConfiguration::instance(QStringLiteral("testfoo"));
 }
 
 void MediaPlayListProxyModelTest::init()
@@ -199,47 +210,51 @@ void MediaPlayListProxyModelTest::cleanup()
     delete mNewTrackByNameInListSpy;
     delete mNewEntryInListSpy;
     delete mNewUrlInListSpy;
+
+    for (const auto &createdFile : createdFiles) {
+        QFile file(createdFile);
+        file.remove();
+    }
 }
 
 void MediaPlayListProxyModelTest::m3uPlaylistParser_SimpleCase()
 {
-    PlaylistParser playlistParser;
-    QList<QUrl> listOfUrls = playlistParser.fromPlaylist(QUrl(QStringLiteral("file:///home/n/a.m3u")), QStringLiteral("/home/n/Music/1.mp3\n/home/n/Music/2.mp3\n").toUtf8());
+    const auto results = PlaylistParser::load(createTemporaryFile(QStringLiteral("simple.m3u"), QStringLiteral("/home/n/Music/1.mp3\n/home/n/Music/2.mp3\n")));
 
-    QCOMPARE(listOfUrls.count(), 2);
+    QCOMPARE(results.value().tracks.count(), 2);
 }
 
 void MediaPlayListProxyModelTest::m3uPlaylistParser_CommentCase()
 {
-    const char * asString = R"--(#EXTM3U
+    const auto contents = QStringLiteral(R"--(#EXTM3U
 #EXTINF:-1 tvg-id="ArianaAfghanistanInternationalTV.us" status="online",Ariana Afghanistan International TV (720p) [Not 24/7]
 http://iptv.arianaafgtv.com/ariana/playlist.m3u8
 #EXTINF:-1 tvg-id="ArianaTVNational.af" status="online",Ariana TV National (720p) [Not 24/7]
 https://d10rltuy0iweup.cloudfront.net/ATNNAT/myStream/playlist.m3u8
-)--";
-    PlaylistParser playlistParser;
-    QList<QUrl> listOfUrls = playlistParser.fromPlaylist(QUrl(QStringLiteral("file:///home/n/a.m3u")), QString::fromUtf8(asString).toUtf8());
+)--");
 
-    QCOMPARE(listOfUrls.count(), 2);
+    const auto results = PlaylistParser::load(createTemporaryFile(QStringLiteral("comment.m3u"), contents));
+
+    QCOMPARE(results.value().tracks.count(), 2);
 }
 
 void MediaPlayListProxyModelTest::m3uPlaylistParser_WindowsLineTerminator()
 {
-    const char * asString = R"--(#EXTM3U\r
+    const auto contents = QStringLiteral(R"--(#EXTM3U\r
 #EXTINF:-1 tvg-id="ArianaAfghanistanInternationalTV.us" status="online",Ariana Afghanistan International TV (720p) [Not 24/7]\r
 http://iptv.arianaafgtv.com/ariana/playlist.m3u8\r
 #EXTINF:-1 tvg-id="ArianaTVNational.af" status="online",Ariana TV National (720p) [Not 24/7]\r
 https://d10rltuy0iweup.cloudfront.net/ATNNAT/myStream/playlist.m3u8\r
-)--";
-    PlaylistParser playlistParser;
-    QList<QUrl> listOfUrls = playlistParser.fromPlaylist(QUrl(QStringLiteral("file:///home/n/a.m3u")), QString::fromUtf8(asString).toUtf8());
+)--");
 
-    QCOMPARE(listOfUrls.count(), 2);
+    const auto results = PlaylistParser::load(createTemporaryFile(QStringLiteral("windowslineterminator.m3u"), contents));
+
+    QCOMPARE(results.value().tracks.count(), 2);
 }
 
 void MediaPlayListProxyModelTest::plsPlaylistParserCase()
 {
-    const char * asString = R"--([playlist]
+    const auto contents = QStringLiteral(R"--([playlist]
 
 File1=https://test.test-dom:8068
 Length1=-1
@@ -253,16 +268,16 @@ Title3=Absolute path
 
 NumberOfEntries=3
 Version=2
-)--";
-    PlaylistParser playlistParser;
-    QList<QUrl> listOfUrls = playlistParser.fromPlaylist(QUrl(QStringLiteral("file:///home/n/a.pls")), QString::fromUtf8(asString).toUtf8());
+)--");
 
-    QCOMPARE(listOfUrls.count(), 3);
+    const auto results = PlaylistParser::load(createTemporaryFile(QStringLiteral("playlistparser.pls"), contents));
+
+    QCOMPARE(results.value().tracks.count(), 3);
 }
 
 void MediaPlayListProxyModelTest::plsPlaylistParser_WindowsLineTerminator()
 {
-    const char * asString = R"--([playlist]\r
+    const auto contents = QStringLiteral(R"--([playlist]\r
 \r
 File1=https://test.test-dom:8068\r
 Length1=-1\r
@@ -276,29 +291,88 @@ Title3=Absolute path\r
 \r
 NumberOfEntries=3\r
 Version=2\r
-)--";
-    PlaylistParser playlistParser;
-    QList<QUrl> listOfUrls = playlistParser.fromPlaylist(QUrl(QStringLiteral("file:///home/n/a.pls")), QString::fromUtf8(asString).toUtf8());
+)--");
 
-    QCOMPARE(listOfUrls.count(), 3);
+    const auto results = PlaylistParser::load(createTemporaryFile(QStringLiteral("windowslineterminator.pls"), contents));
+
+    QCOMPARE(results.value().tracks.count(), 3);
+}
+
+void MediaPlayListProxyModelTest::playlistParser_UnsupportedMimeTypeCase()
+{
+    // just exercising some odd code paths that used to crash
+    const auto txtFile = createTemporaryFile(QStringLiteral("unsupported.txt"), QStringLiteral("not a playlist\n"));
+    QVERIFY(!PlaylistParser::load(txtFile).has_value());
+
+    const auto waxFile = createTemporaryFile(QStringLiteral("unsupported.wax"), QStringLiteral("/home/n/Music/1.mp3\n"));
+    QVERIFY(!PlaylistParser::load(waxFile).has_value());
+}
+
+void MediaPlayListProxyModelTest::playlistParser_SaveUnsupportedMimeTypeCase()
+{
+    const auto playlist = PlaylistModel({MediaPlayListEntry{QUrl::fromLocalFile(QStringLiteral("/home/n/Music/1.mp3"))}});
+
+    const auto txtUrl = createTemporaryFile(QStringLiteral("unsupported.txt"), QStringLiteral("not a playlist\n"));
+    QVERIFY(!PlaylistParser::save(txtUrl, playlist));
+
+    // a failed Save must not clobber an existing file
+    QFile txtFile(txtUrl.toLocalFile());
+    QVERIFY(txtFile.open(QIODevice::ReadOnly));
+    QCOMPARE(QString::fromUtf8(txtFile.readAll()), QStringLiteral("not a playlist\n"));
+}
+
+void MediaPlayListProxyModelTest::playlistParser_SupportedMimeTypeDetection()
+{
+    const QMimeDatabase mimeDb;
+
+    QCOMPARE(PlaylistParser::formatForType(mimeDb.mimeTypeForFile(QStringLiteral("foo.m3u"))), PlaylistParser::Format::M3u);
+    QCOMPARE(PlaylistParser::formatForType(mimeDb.mimeTypeForFile(QStringLiteral("foo.m3u8"))), PlaylistParser::Format::M3u);
+    QCOMPARE(PlaylistParser::formatForType(mimeDb.mimeTypeForFile(QStringLiteral("foo.pls"))), PlaylistParser::Format::Pls);
+
+    QVERIFY(!PlaylistParser::formatForType(mimeDb.mimeTypeForFile(QStringLiteral("foo.txt"))));
+    QVERIFY(!PlaylistParser::formatForType(mimeDb.mimeTypeForFile(QStringLiteral("foo.wax"))));
+    QVERIFY(!PlaylistParser::formatForType(mimeDb.mimeTypeForFile(QStringLiteral("foo.xml"))));
+
+    QCOMPARE(ElisaUtils::isPlayList(mimeDb.mimeTypeForFile(QStringLiteral("foo.m3u"))), true);
+    QCOMPARE(ElisaUtils::isPlayList(mimeDb.mimeTypeForFile(QStringLiteral("foo.wax"))), false);
 }
 
 void MediaPlayListProxyModelTest::m3uPlaylistParser_ToPlaylist()
 {
-    PlaylistParser playlistParser;
-    QList<QString> listOfUrls {QStringLiteral("/home/n/Music/1.mp3"), QStringLiteral("/home/n/Music/2.mp3")};
-    QString fileContent = playlistParser.toPlaylist(QUrl(QStringLiteral("file:///home/n/a.m3u")), listOfUrls);
+    const QList entries{MediaPlayListEntry(QUrl(QStringLiteral("/home/n/Music/1.mp3"))), MediaPlayListEntry(QUrl(QStringLiteral("/home/n/Music/2.mp3")))};
 
-    QCOMPARE(fileContent.count(QLatin1Char('\n')), 2);
+    const auto playlist = PlaylistModel(entries);
+
+    const auto path = QUrl(QStringLiteral("toplaylist.m3u"));
+
+    if (!PlaylistParser::save(path, playlist)) {
+        QTEST_FAIL_ACTION;
+    }
+
+    QFile file(path.toLocalFile());
+    file.open(QIODeviceBase::ReadOnly | QIODeviceBase::Text);
+    createdFiles.append(path.toLocalFile());
+
+    QCOMPARE(QString::fromUtf8(file.readAll()).count(QLatin1Char('\n')), 2);
 }
 
 void MediaPlayListProxyModelTest::plsPlaylistParser_ToPlaylist()
 {
-    PlaylistParser playlistParser;
-    QList<QString> listOfUrls {QStringLiteral("/home/n/Music/1.mp3"), QStringLiteral("/home/n/Music/2.mp3")};
-    QString fileContent = playlistParser.toPlaylist(QUrl(QStringLiteral("file:///home/n/a.pls")), listOfUrls);
+    const QList entries{MediaPlayListEntry(QUrl(QStringLiteral("/home/n/Music/1.mp3"))), MediaPlayListEntry(QUrl(QStringLiteral("/home/n/Music/2.mp3")))};
 
-    QCOMPARE(fileContent.count(QStringLiteral("\nFile")), 2);
+    const auto playlist = PlaylistModel(entries);
+
+    const auto path = QUrl(QStringLiteral("toplaylist.pls"));
+
+    if (!PlaylistParser::save(path, playlist)) {
+        QTEST_FAIL_ACTION;
+    }
+
+    QFile file(path.toLocalFile());
+    file.open(QIODeviceBase::ReadOnly | QIODeviceBase::Text);
+    createdFiles.append(path.toLocalFile());
+
+    QCOMPARE(QString::fromUtf8(file.readAll()).count(QStringLiteral("\nFile")), 2);
 }
 
 void MediaPlayListProxyModelTest::simpleInitialCase()

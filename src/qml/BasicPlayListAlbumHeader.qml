@@ -6,14 +6,16 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import QtQuick.Window 2.2
-import QtQuick.Layouts 1.2
-import org.kde.kirigami 2.10 as Kirigami
+import QtQuick
+import QtQuick.Window
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 
 import org.kde.elisa
 
 Rectangle {
+    id: root
+
     property var headerData
     property string album: headerData[0]
     property string albumArtist: headerData[1]
@@ -39,23 +41,19 @@ Rectangle {
 
         // keep section's elements aligned with playlistEntry's ones
         Item {
-            visible: !simpleMode
+            visible: !root.simpleMode
             Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
             Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
         }
 
-        ImageWithFallback {
+        Kirigami.Icon {
             Layout.preferredWidth: Theme.coverArtSize
             Layout.preferredHeight: Theme.coverArtSize
 
-            source: imageUrl
+            readonly property url image: root.imageUrl
+            source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? "not-an-icon" : image
             fallback: Theme.defaultAlbumImage
-
-            sourceSize.width: height * Screen.devicePixelRatio
-            sourceSize.height: height * Screen.devicePixelRatio
-
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
+            roundToIconSize: false
         }
 
         ColumnLayout {
@@ -70,7 +68,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignBottom | Qt.AlignLeft
 
-                text: album
+                text: root.album
                 level: 2
             }
 
@@ -80,7 +78,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignTop | Qt.AlignLeft
 
-                text: albumArtist
+                text: root.albumArtist
                 type: Kirigami.Heading.Type.Secondary
             }
         }

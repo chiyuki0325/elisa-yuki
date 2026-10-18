@@ -34,6 +34,7 @@ CMakeLists.txt.user*
 .idea
 /cmake-build*
 .kateproject.build
+/CMakeUserPresets.json
 
 # PKGBUILD
 PKGBUILD/src/

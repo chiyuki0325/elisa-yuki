@@ -7,12 +7,13 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQml.Models 2.1
-import QtQuick.Layouts 1.2
+import QtQuick
+import QtQuick.Controls
+import QtQml.Models
+import QtQuick.Layouts
 
-import org.kde.kirigami 2.12 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 FocusScope {
@@ -146,22 +147,22 @@ FocusScope {
                 value: navigationBar.sortRole
             }
 
-            onEnqueue: contentModel.enqueueAll(ElisaUtils.AppendPlayList, ElisaUtils.DoNotTriggerPlay)
+            onEnqueue: abstractView.contentModel.enqueueAll(ElisaUtils.AppendPlayList, ElisaUtils.DoNotTriggerPlay)
 
-            onReplaceAndPlay: contentModel.enqueueAll(ElisaUtils.ReplacePlayList, ElisaUtils.TriggerPlay)
+            onReplaceAndPlay: abstractView.contentModel.enqueueAll(ElisaUtils.ReplacePlayList, ElisaUtils.TriggerPlay)
 
-            onPlayNext: contentModel.enqueueAll(ElisaUtils.AfterCurrentTrack, ElisaUtils.DoNotTriggerPlay)
+            onPlayNext: abstractView.contentModel.enqueueAll(ElisaUtils.AfterCurrentTrack, ElisaUtils.DoNotTriggerPlay)
 
             onGoBack: abstractView.viewManager.goBack()
 
             onSortOrderChanged: {
-                if (!contentModel || !navigationBar.enableSorting) {
+                if (!abstractView.contentModel || !navigationBar.enableSorting) {
                     return
                 }
 
-                if ((contentModel.sortedAscending && sortOrder !== Qt.AscendingOrder) ||
-                    (!contentModel.sortedAscending && sortOrder !== Qt.DescendingOrder)) {
-                    contentModel.sortModel(sortOrder)
+                if ((abstractView.contentModel.sortedAscending && sortOrder !== Qt.AscendingOrder) ||
+                    (!abstractView.contentModel.sortedAscending && sortOrder !== Qt.DescendingOrder)) {
+                    abstractView.contentModel.sortModel(sortOrder)
                 }
             }
         }
@@ -186,7 +187,7 @@ FocusScope {
         height: Kirigami.Units.gridUnit * 5
         width: height
 
-        active: realModel ? realModel.isBusy : true
+        active: abstractView.realModel ? abstractView.realModel.isBusy : true
         visible: active && status === Loader.Ready
 
         sourceComponent: BusyIndicator {
@@ -205,7 +206,7 @@ FocusScope {
         sourceComponent: Kirigami.PlaceholderMessage {
             anchors.centerIn: parent
             icon.name: "edit-none"
-            text: navigationBar.filterText.length > 0 ? i18nc("@info:placeholder", "No matches") : i18nc("@info:placeholder", "Nothing to display")
+            text: navigationBar.filterText.length > 0 ? KI18n.i18nc("@info:placeholder", "No matches") : KI18n.i18nc("@info:placeholder", "Nothing to display")
         }
     }
 

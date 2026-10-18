@@ -8,11 +8,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.3
-import QtQuick.Window 2.2
+import QtQuick.Layouts
+import QtQuick.Window
 import QtQuick.Effects as FX
-import org.kde.kirigami 2.5 as Kirigami
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 import ".."
 
@@ -48,15 +47,15 @@ Flickable {
 
     NumberAnimation on contentY {
         id: toOpen
-        from: contentY
-        to: contentHeight / 2
+        from: footerBar.contentY
+        to: footerBar.contentHeight / 2
         duration: Kirigami.Units.longDuration * 2
         easing.type: Easing.OutCubic
         running: false
     }
     NumberAnimation on contentY {
         id: toClose
-        from: contentY
+        from: footerBar.contentY
         to: 0
         duration: Kirigami.Units.longDuration * 2
         easing.type: Easing.OutCubic
@@ -127,14 +126,16 @@ Flickable {
             anchors.fill: parent
         }
 
-        component BlurredImage : ImageWithFallback {
-            fallback: Theme.defaultBackgroundImage
-            asynchronous: true
-
+        component BlurredImage : Image {
             anchors.fill: parent
             fillMode: Image.PreserveAspectCrop
 
-            sourceSize.width: Screen.width
+            onSourceChanged: {
+                //Fallback to default image
+                if (source === Qt.url("") || source === '' || source === undefined || source === null) {
+                    source = Qt.resolvedUrl(Theme.defaultBackgroundImage)
+                }
+            }
 
             opacity: 1
 
@@ -160,12 +161,12 @@ Flickable {
 
         BlurredImage {
             id: oldBackground
-            source: oldImage
+            source: footerBar.oldImage
         }
 
         BlurredImage {
             id: newBackground
-            source: newImage
+            source: footerBar.newImage
         }
     }
 
@@ -186,7 +187,7 @@ Flickable {
             Layout.alignment: Qt.AlignTop
             focus: true
 
-            image: newImage
+            image: footerBar.newImage
             title: footerBar.title
             artist: footerBar.artist
         }
@@ -197,7 +198,7 @@ Flickable {
             Layout.fillHeight: true
             Layout.margins: Kirigami.Units.largeSpacing * 2
 
-            image: newImage
+            image: footerBar.newImage
             title: footerBar.title
             artist: footerBar.artist
             album: footerBar.album
@@ -213,15 +214,15 @@ Flickable {
         onStarted: {
             newBackground.opacity = 0;
             newBackground.visible = true;
-            newBackground.source = (newImage ? newImage : Qt.resolvedUrl(Theme.defaultBackgroundImage));
+            newBackground.source = (footerBar.newImage ? footerBar.newImage : Qt.resolvedUrl(Theme.defaultBackgroundImage));
         }
 
         onStopped: {
-            footerBar.oldImage = image;
+            footerBar.oldImage = footerBar.image;
             oldBackground.source = (footerBar.oldImage ? footerBar.oldImage : Qt.resolvedUrl(Theme.defaultBackgroundImage));
             oldBackground.opacity = 1;
             newBackground.visible = false;
-            oldImage = newImage;
+            footerBar.oldImage = footerBar.newImage;
         }
 
         NumberAnimation {
@@ -243,4 +244,3 @@ Flickable {
         }
     }
 }
-

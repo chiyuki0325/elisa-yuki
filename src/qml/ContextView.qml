@@ -3,16 +3,17 @@
    SPDX-FileCopyrightText: 2019 (c) Nate Graham <nate@kde.org>
 
    SPDX-License-Identifier: LGPL-3.0-or-later
- */
+*/
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.15
-import QtQuick.Window 2.2
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.2
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Effects as FX
-import org.kde.kirigami 2.12 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 Kirigami.Page {
@@ -37,7 +38,7 @@ Kirigami.Page {
                                            && songTitle.length === 0
                                            && fileUrl.toString().length === 0
 
-    title: i18nc("@title:window Title of the context view related to the currently playing track", "Now Playing")
+    title: KI18n.i18nc("@title:window Title of the context view related to the currently playing track", "Now Playing")
     padding: 0
 
     property bool isWidescreen: mainWindow.width >= Theme.viewSelectorSmallSizeThreshold
@@ -48,7 +49,7 @@ Kirigami.Page {
 
     TrackContextMetaDataModel {
         id: metaDataModel
-        onLyricsChanged: lyricsModel.setLyric(lyrics)
+        onLyricsChanged: lyricsView.model.setLyric(lyrics)
         manager: ElisaApplication.musicManager
     }
 
@@ -65,6 +66,7 @@ Kirigami.Page {
         // to the bottom of the window such that this toolbar touches the window
         // titlebar
         Kirigami.Theme.colorSet: Kirigami.Theme.Window
+        Kirigami.Theme.inherit: false
 
         RowLayout {
             anchors.fill: parent
@@ -74,7 +76,7 @@ Kirigami.Page {
                 id: showSidebarButton
                 objectName: 'showSidebarButton'
                 visible: Kirigami.Settings.isMobile
-                text: i18nc("@action:button", "Open sidebar")
+                text: KI18n.i18nc("@action:button", "Open sidebar")
                 icon.name: "open-menu-symbolic"
                 onClicked: mainWindow.globalDrawer.open()
             }
@@ -83,6 +85,7 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 Layout.leftMargin: Kirigami.Units.largeSpacing
                 Layout.alignment: Qt.AlignVCenter
+                elide: Text.ElideRight
 
                 text: topItem.title
             }
@@ -109,7 +112,7 @@ Kirigami.Page {
                 checked: !persistentSettings.nowPlayingPreferLyric
                 display: topItem.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
                 icon.name: "documentinfo"
-                text: i18nc("@option:radio One of the 'now playing' views", "Metadata")
+                text: KI18n.i18nc("@option:radio One of the 'now playing' views", "Metadata")
                 visible: !contentLayout.wideMode
             }
             FlatButtonWithToolTip {
@@ -120,14 +123,14 @@ Kirigami.Page {
                 checked: persistentSettings.nowPlayingPreferLyric
                 display: topItem.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
                 icon.name: "view-media-lyrics"
-                text: i18nc("@option:radio One of the 'now playing' views", "Lyrics")
+                text: KI18n.i18nc("@option:radio One of the 'now playing' views", "Lyrics")
                 visible: !contentLayout.wideMode
             }
 
             FlatButtonWithToolTip {
                 id: showPlaylistButton
                 visible: Kirigami.Settings.isMobile
-                text: i18nc("@action:button", "Show Playlist")
+                text: KI18n.i18nc("@action:button", "Show Playlist")
                 icon.name: "view-media-playlist"
                 display: topItem.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
                 onClicked: {
@@ -182,20 +185,15 @@ Kirigami.Page {
             onActiveChanged: loadImage()
 
             function loadImage() {
-                if (pendingImage) {
-                    pendingImage.statusChanged.disconnect(replaceWhenLoaded);
-                    pendingImage.destroy();
-                    pendingImage = null;
-                }
-
                 if (!active) {
                     clear();
                     return;
                 }
 
                 doesSkipAnimation = currentItem == undefined;
+                const albumImage = topItem.albumArtUrl;
                 pendingImage = backgroundComponent.createObject(background, {
-                    "source": topItem.albumArtUrl.toString() === "" ? Qt.resolvedUrl(Theme.defaultAlbumImage) : topItem.albumArtUrl,
+                    "source": (albumImage === "" || albumImage === Qt.url("") || albumImage === undefined || albumImage === null) ? Theme.defaultBackgroundImage : topItem.albumArtUrl,
                     "opacity": 0,
                 });
 
@@ -207,9 +205,10 @@ Kirigami.Page {
             }
 
             function replaceWhenLoaded() {
-                pendingImage.statusChanged.disconnect(replaceWhenLoaded);
-                replace(pendingImage, {}, StackView.Transition);
-                pendingImage = null;
+                if (pendingImage && pendingImage.status === Image.Ready) {
+                    replace(pendingImage, {}, StackView.Transition);
+                    pendingImage = null;
+                }
             }
 
             Component.onCompleted: {
@@ -230,18 +229,12 @@ Kirigami.Page {
                         sourceSize = Qt.size(Kirigami.Units.gridUnit * 50, Kirigami.Units.gridUnit * 50);
                     }
                 }
-
-                StackView.onRemoved: {
-                    destroy();
-                }
             }
         }
 
         RowLayout {
             id: contentLayout
 
-            // property bool wideMode: allMetaDataLoader.width <= width * 0.5
-            //                        && allMetaDataLoader.height <= height
             property bool wideMode: false
 
             anchors.fill: parent
@@ -331,110 +324,19 @@ Kirigami.Page {
                 }
             }
 
-            // Lyrics
-            Item {
-                id: lyricItem
-                Layout.fillHeight: true
+            //Lyrics
+            LyricsView {
+                id: lyricsView
                 visible: contentLayout.wideMode || showLyricButton.checked
+                alignLeft: contentLayout.wideMode
+
+                Layout.fillHeight: true
 
                 implicitWidth: {
                     if (contentLayout.wideMode) {
-                        return contentLayout.width * 0.5
+                        return contentLayout.width * 0.5;
                     } else {
-                        return showLyricButton.checked ? contentLayout.width : 0
-                    }
-                }
-
-                ScrollView {
-                    id: lyricScroll
-                    anchors.centerIn: parent
-                    height: Math.min(lyricItem.height, implicitHeight)
-                    width: lyricItem.width
-
-                    // HACK: workaround for https://bugreports.qt.io/browse/QTBUG-83890
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    PropertyAnimation {
-                        id: lyricScrollAnimation
-
-                        // the target is a flickable
-                        target: lyricScroll.contentItem
-                        property: "contentY"
-                        onToChanged: restart()
-                    }
-
-                    contentItem: ListView {
-                        id: lyricsView
-
-                        model: lyricsModel
-                        delegate: Label {
-                            required property string lyric
-                            required property int timestamp
-
-                            text: lyric
-                            width: lyricItem.width
-                            bottomPadding: 8
-                            topPadding: 8
-                            wrapMode: Text.WordWrap
-                            font.bold: ListView.isCurrentItem
-                            horizontalAlignment: contentLayout.wideMode? Text.AlignLeft : Text.AlignHCenter
-                            MouseArea {
-                                height: parent.height
-                                width: Math.min(parent.width, parent.contentWidth)
-                                x: contentLayout.wideMode ? 0 : (parent.width - width) / 2
-                                enabled: lyricsModel.isLRC
-                                cursorShape: enabled ? Qt.PointingHandCursor : undefined
-                                onClicked: {
-                                    ElisaApplication.audioPlayer.position = timestamp;
-                                }
-                            }
-                            font.pointSize: ListView.isCurrentItem ? 14: 12
-                        }
-
-                        header: Item {
-                            height: lyricItem.height * 0.5
-                        }
-
-                        footer: Item {
-                            height: lyricItem.height * 0.5
-                        }
-
-                        currentIndex: lyricsModel.highlightedIndex
-                        property int lastIndex: -1
-                        onCurrentIndexChanged: {
-                            if (currentIndex === -1)
-                                return
-
-                            // center aligned
-                            const toPos = Math.round(currentItem.y + currentItem.height * 0.5 + 8 - lyricScroll.height * 0.5)
-                            // make sure the first and the last lines are always
-                            // positioned at the beginning and the end of the view
-
-                            lyricScrollAnimation.to = toPos
-                        }
-                    }
-                }
-
-                LyricsModel {
-                    id: lyricsModel
-                }
-                Connections {
-                    target: ElisaApplication.audioPlayer
-                    function onPositionChanged(position) {
-                        lyricsModel.setPosition(position)
-                    }
-                }
-
-                Loader {
-                    id: lyricPlaceholder
-                    anchors.centerIn: parent
-                    width: parent.width
-
-                    active: lyricsView.count === 0
-                    visible: active && status === Loader.Ready
-
-                    sourceComponent: Kirigami.PlaceholderMessage {
-                        text: i18nc("@info:placeholder", "No lyrics found")
-                        icon.name: "view-media-lyrics"
+                        return showLyricButton.checked ? contentLayout.width : 0;
                     }
                 }
             }
@@ -449,7 +351,7 @@ Kirigami.Page {
             visible: active && status === Loader.Ready
 
             sourceComponent: Kirigami.PlaceholderMessage {
-                text: i18nc("@info:placeholder", "Nothing playing")
+                text: KI18n.i18nc("@info:placeholder", "Nothing playing")
                 icon.name: "view-media-track"
             }
         }
@@ -458,7 +360,6 @@ Kirigami.Page {
     // Footer with file path label
     footer: ToolBar {
         implicitHeight: Math.round(Kirigami.Units.gridUnit * 2)
-        // visible: !topItem.nothingPlaying
         visible: false
 
         RowLayout {
@@ -484,7 +385,7 @@ Kirigami.Page {
 
                 actions: [
                     Kirigami.Action {
-                        text: i18nc("@action:button", "Show In Folder")
+                        text: KI18n.i18nc("@action:button", "Show In Folder")
                         icon.name: 'document-open-folder'
                         visible: metaDataModel.fileUrl.toString() !== "" && !metaDataModel.fileUrl.toString().startsWith("http") && !metaDataModel.fileUrl.toString().startsWith("rtsp")
                         onTriggered: {
@@ -520,8 +421,8 @@ Kirigami.Page {
         target: ElisaApplication
 
         function onMusicManagerChanged() {
-            if (ElisaApplication.musicManager && trackType !== undefined && databaseId !== 0) {
-                metaDataModel.initializeByIdAndUrl(trackType, databaseId, fileUrl)
+            if (ElisaApplication.musicManager && topItem.trackType !== undefined && topItem.databaseId !== 0) {
+                metaDataModel.initializeByIdAndUrl(topItem.trackType, topItem.databaseId, topItem.fileUrl)
             }
         }
     }

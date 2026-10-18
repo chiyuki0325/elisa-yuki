@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # KDE Applications version, managed by release script.
-set(RELEASE_SERVICE_VERSION_MAJOR "25")
+set(RELEASE_SERVICE_VERSION_MAJOR "26")
 set(RELEASE_SERVICE_VERSION_MINOR "11")
 set(RELEASE_SERVICE_VERSION_MICRO "70")
 set(RELEASE_SERVICE_VERSION "${RELEASE_SERVICE_VERSION_MAJOR}.${RELEASE_SERVICE_VERSION_MINOR}.${RELEASE_SERVICE_VERSION_MICRO}")
@@ -14,7 +14,7 @@ project(elisa
     VERSION ${RELEASE_SERVICE_VERSION}
     LANGUAGES CXX)
 
-set(REQUIRED_KF_VERSION "6.9")
+set(REQUIRED_KF_VERSION "6.21")
 find_package(ECM ${REQUIRED_KF_VERSION} REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${ECM_MODULE_PATH})
 
@@ -28,7 +28,6 @@ include(FeatureSummary)
 include(ECMAddAppIcon)
 include(ECMAddTests)
 include(ECMQtDeclareLoggingCategory)
-include(ECMGenerateQmlTypes)
 include(ECMAddAndroidApk)
 include(ECMFindQmlModule)
 
@@ -109,6 +108,11 @@ set_package_properties(KF6Crash PROPERTIES
     DESCRIPTION "Graceful handling of application crashes."
     TYPE OPTIONAL)
 
+find_package(KF6KirigamiAddons CONFIG QUIET)
+set_package_properties(KF6KirigamiAddons PROPERTIES
+    DESCRIPTION "Addons for Kirigami applications"
+    TYPE REQUIRED)
+
 if (NOT WIN32 AND NOT ANDROID)
     find_package(KF6DBusAddons ${REQUIRED_KF_VERSION} CONFIG QUIET)
     set_package_properties(KF6DBusAddons PROPERTIES
@@ -117,6 +121,7 @@ if (NOT WIN32 AND NOT ANDROID)
 endif()
 
 if (ANDROID)
+    find_package(Qt6 ${REQUIRED_QT_VERSION} CONFIG REQUIRED COMPONENTS CorePrivate)
     find_package(KF6Kirigami ${REQUIRED_KF_VERSION} CONFIG QUIET)
     set_package_properties(KF6Kirigami PROPERTIES
         DESCRIPTION "Used to package icons on Android."
@@ -142,11 +147,29 @@ if (UPNPQT_FOUND)
     message(WARNING "UPnP support is experimental and may not work.")
 endif()
 
-find_package(LIBVLC QUIET)
-set_package_properties(LIBVLC PROPERTIES
-    DESCRIPTION "libvlc allows to play music in Elisa (otherwise it will use QtMultimedia)"
-    URL "https://www.videolan.org/vlc/libvlc.html"
-    TYPE RECOMMENDED)
+set(REQUIRED_DRAGON_MEDIA_BACKEND_VERSION "0.82.0")
+
+find_package(DragonMediaBackend ${REQUIRED_DRAGON_MEDIA_BACKEND_VERSION} CONFIG QUIET)
+
+if (NOT DragonMediaBackend_FOUND)
+    message(STATUS "Dragon Media Backend ${REQUIRED_DRAGON_MEDIA_BACKEND_VERSION} not found as installed package, fetching via FetchContent...")
+    include(FetchContent)
+    FetchContent_Declare(
+        DragonMediaBackend
+        GIT_REPOSITORY https://invent.kde.org/libraries/dragon-media-backend.git
+        GIT_TAG v${REQUIRED_DRAGON_MEDIA_BACKEND_VERSION}
+    )
+    block()
+        set(BUILD_EXAMPLES OFF)
+        set(BUILD_TESTING OFF)
+        FetchContent_MakeAvailable(DragonMediaBackend)
+    endblock()
+else()
+    find_package(DragonMediaBackend ${REQUIRED_DRAGON_MEDIA_BACKEND_VERSION} CONFIG REQUIRED)
+    set_package_properties(DragonMediaBackend PROPERTIES
+        DESCRIPTION "Dragon Media Backend audio engine for Elisa"
+        TYPE REQUIRED)
+endif()
 
 ecm_find_qmlmodule(org.kde.kirigami 2.20)
 ecm_find_qmlmodule(org.kde.kirigamiaddons.formcard 1.0)

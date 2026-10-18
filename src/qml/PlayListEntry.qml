@@ -6,11 +6,12 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.3
-import QtQuick.Window 2.2
-import org.kde.kirigami 2.17 as Kirigami
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Window
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 import "shared"
@@ -34,6 +35,9 @@ BasePlayListDelegate {
 
     readonly property bool hasActiveFocus: playListEntry.activeFocus || entryFocusScope.activeFocus
 
+    readonly property color textColor: highlighted || down ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+    readonly property color iconColor: textColor
+
     Accessible.role: Accessible.ListItem
     Accessible.name: title + ' ' + album + ' ' + artist
 
@@ -46,6 +50,11 @@ BasePlayListDelegate {
     bottomPadding: grouped ? 0 : Kirigami.Units.smallSpacing
     leftPadding: mirrored ? Kirigami.Units.smallSpacing : 0
     rightPadding: mirrored ? 0 : Kirigami.Units.smallSpacing
+
+    topInset: 0
+    bottomInset: 0
+    leftInset: 0
+    rightInset: 0
 
     // Set this explicitly since we rely on it; we don't want the theme setting
     // it to false under us!
@@ -64,16 +73,16 @@ BasePlayListDelegate {
         Loader {
             id: metadataLoader
             active: false
-            onLoaded: item.show()
+            onLoaded: (item as MediaTrackMetadataView).show()
 
             sourceComponent: MediaTrackMetadataView {
                 fileName: playListEntry.fileName
-                showImage: entryType !== ElisaUtils.Radio
-                modelType: entryType
-                showTrackFileName: entryType !== ElisaUtils.Radio
-                showDeleteButton: entryType === ElisaUtils.Radio
+                showImage: playListEntry.entryType !== ElisaUtils.Radio
+                modelType: playListEntry.entryType
+                showTrackFileName: playListEntry.entryType !== ElisaUtils.Radio
+                showDeleteButton: playListEntry.entryType === ElisaUtils.Radio
                 editableMetadata: playListEntry.metadataModifiableRole
-                canAddMoreMetadata: entryType !== ElisaUtils.Radio
+                canAddMoreMetadata: playListEntry.entryType !== ElisaUtils.Radio
 
                 onRejected: metadataLoader.active = false
             }
@@ -81,67 +90,47 @@ BasePlayListDelegate {
 
         QtObject {
             id: actionList
-            property var locateFileAction: Kirigami.Action {
-                text: i18nc("@action:button Show the file for this song in the file manager", "Show in folder")
-                icon.name: "document-open-folder"
-                visible: playListEntry.fileName.toString().substring(0, 7) === 'file://'
-                enabled: isValid
-                onTriggered: ElisaApplication.showInFolder(playListEntry.fileName)
-            }
+
             property var infoAction: Kirigami.Action {
-                text: i18nc("@action:button Show track metadata", "View details")
+                text: KI18n.i18nc("@action:button Show track metadata", "View details")
                 icon.name: "help-about"
-                enabled: isValid
+                enabled: playListEntry.isValid
                 onTriggered: {
                     if (metadataLoader.active === false) {
                         metadataLoader.active = true
                     }
                     else {
-                        metadataLoader.item.close();
+                        (metadataLoader.item as MediaTrackMetadataView).close();
                         metadataLoader.active = false
                     }
                 }
             }
             property var ratingAction: Kirigami.Action {
-                text: i18nc("@action:button", "Set track rating")
+                text: KI18n.i18nc("@action:button", "Set track rating")
                 icon.name: "view-media-favorite"
                 visible: !ElisaApplication.useFavoriteStyleRatings
-                enabled: isValid
+                enabled: playListEntry.isValid
 
                 onTriggered: {
                     playListEntry.editingRating = true;
                 }
             }
             property var favoriteAction: Kirigami.Action {
-                text: playListEntry.isFavorite ? i18nc("@action:button", "Un-mark this song as a favorite") : i18nc("@action:button", "Mark this song as a favorite")
-                icon.name: playListEntry.isFavorite ? "rating" : "rating-unrated"
+                text: playListEntry.isFavorite ? KI18n.i18nc("@action:button", "Un-mark this song as a favorite") : KI18n.i18nc("@action:button", "Mark this song as a favorite")
+                icon.name: playListEntry.isFavorite ? "starred" : "non-starred"
                 visible: ElisaApplication.useFavoriteStyleRatings
-                enabled: isValid
+                enabled: playListEntry.isValid
 
                 onTriggered: {
                     const newRating = playListEntry.isFavorite ? 0 : 10;
                     // Change icon immediately in case backend is slow
-                    icon.name = playListEntry.isFavorite ? "rating-unrated" : "rating";
+                    icon.name = playListEntry.isFavorite ? "non-starred" : "starred";
                     ElisaApplication.musicManager.updateSingleFileMetaData(playListEntry.fileName, DataTypes.RatingRole, newRating);
                 }
             }
-            property var playPauseAction: Kirigami.Action {
-                text: (isPlaying === MediaPlayList.IsPlaying) ? i18nc("@action:button Pause current track from playlist", "Pause") : i18nc("@action:button Play this track from playlist", "Play")
-                icon.name: (isPlaying === MediaPlayList.IsPlaying) ? "media-playback-pause" : "media-playback-start"
-                enabled: isValid
-                onTriggered: {
-                    if (isPlaying === MediaPlayList.IsPlaying) {
-                        playListEntry.pausePlayback()
-                    } else if (isPlaying === MediaPlayList.IsPaused) {
-                        playListEntry.startPlayback()
-                    } else {
-                        playListEntry.switchToTrack(playListEntry.index)
-                        playListEntry.startPlayback()
-                    }
-                }
-            }
+
             property var removeAction: Kirigami.Action {
-                text: i18nc("@action:button Remove current track from play list", "Remove")
+                text: KI18n.i18nc("@action:button Remove current track from play list", "Remove")
                 icon.name: "edit-delete-remove"
                 onTriggered: {
                     playListEntry.removeFromPlaylist(playListEntry.index)
@@ -159,11 +148,11 @@ BasePlayListDelegate {
                 (Theme.toolButtonHeight + Kirigami.Units.smallSpacing))
 
             spacing: Kirigami.Units.smallSpacing
+
             Item { implicitWidth: spacing }
 
             Loader {
-                // Layout.leftMargin: trackRow.spacing
-                active: !simpleMode && playListEntry.showDragHandle
+                active: !playListEntry.simpleMode && playListEntry.showDragHandle
                 visible: playListEntry.hovered
                 sourceComponent: Kirigami.ListItemDragHandle {
                     listItem: playListEntry
@@ -189,15 +178,12 @@ BasePlayListDelegate {
                     opacity: playIcon.visible ? 0.2 : 1
                     anchors.fill: parent
 
-                    sourceComponent: ImageWithFallback {
-                        source: imageUrl
+                    readonly property url imageUrl: playListEntry.imageUrl
+                    sourceComponent: Kirigami.Icon {
+                        source: (imageUrl === "" || imageUrl === Qt.url("") || imageUrl === undefined || imageUrl === null) ? "not-an-icon" : imageUrl
                         fallback: Theme.defaultAlbumImage
 
-                        sourceSize.width: height
-                        sourceSize.height: height
-
-                        fillMode: Image.PreserveAspectFit
-                        asynchronous: true
+                        roundToIconSize: false
                     }
                 }
 
@@ -206,20 +192,19 @@ BasePlayListDelegate {
 
                     anchors.centerIn: parent
 
-                    source: (isPlaying === MediaPlayList.IsPlaying ?
-                    Qt.resolvedUrl(Theme.playingIndicatorIcon) : Qt.resolvedUrl(Theme.pausedIndicatorIcon))
+                    source: playListEntry.isPlaying === MediaPlayList.IsPlaying ? "media-playback-playing" : "media-playback-pause"
 
                     width: Kirigami.Units.iconSizes.smallMedium
                     height: Kirigami.Units.iconSizes.smallMedium
 
-                    visible: isPlaying === MediaPlayList.IsPlaying || isPlaying === MediaPlayList.IsPaused
+                    visible: playListEntry.isPlaying === MediaPlayList.IsPlaying || playListEntry.isPlaying === MediaPlayList.IsPaused
 
-                    isMask: simpleMode
-                    color: Kirigami.Theme.textColor
+                    isMask: playListEntry.simpleMode
+                    color: playListEntry.iconColor
                 }
 
                 Loader {
-                    active: playListEntry.grouped && isValid && !playIcon.visible
+                    active: playListEntry.grouped && playListEntry.isValid && !playIcon.visible
                     anchors.fill: parent
 
                     sourceComponent: Label {
@@ -230,20 +215,21 @@ BasePlayListDelegate {
 
                         text: {
                             let trackNumberString = "";
-                            if (trackNumber !== -1) {
-                                trackNumberString = Number(trackNumber).toLocaleString(Qt.locale(), 'f', 0);
+                            if (playListEntry.trackNumber !== -1) {
+                                trackNumberString = Number(playListEntry.trackNumber).toLocaleString(Qt.locale(), 'f', 0);
                             } else {
                                 trackNumberString = ''
                             }
-                            if (!isSingleDiscAlbum && discNumber !== 0 ) {
-                                return trackNumberString + "/" + Number(discNumber).toLocaleString(Qt.locale(), 'f', 0)
+                            if (!playListEntry.isSingleDiscAlbum && playListEntry.discNumber !== 0 ) {
+                                return trackNumberString + "/" + Number(playListEntry.discNumber).toLocaleString(Qt.locale(), 'f', 0)
                             } else {
                                 return trackNumberString
                             }
                         }
                         textFormat: Text.PlainText
-                        font.weight: (isPlaying ? Font.Bold : Font.Normal)
+                        font.weight: (playListEntry.isPlaying ? Font.Bold : Font.Normal)
                         font.features: { "tnum": 1 }
+                        color: playListEntry.textColor
                     }
                 }
             }
@@ -253,19 +239,21 @@ BasePlayListDelegate {
                 Layout.fillWidth: true
 
                 LabelWithToolTip {
-                    text: title
-                    font.weight: isPlaying ? Font.Bold : Font.Normal
-                    visible: isValid
+                    text: playListEntry.title
+                    font.weight: playListEntry.isPlaying ? Font.Bold : Font.Normal
+                    visible: playListEntry.isValid
                     Layout.fillWidth: true
+                    color: playListEntry.textColor
                 }
 
                 Loader {
-                    active: !playListEntry.grouped && (artist || album)
+                    active: !playListEntry.grouped && (playListEntry.artist || playListEntry.album)
                     visible: active
                     Layout.fillWidth: true
                     sourceComponent: LabelWithToolTip {
-                        text: [artist, album].filter(Boolean).join(" - ")
+                        text: [playListEntry.artist, playListEntry.album].filter(Boolean).join(" - ")
                         type: Kirigami.Heading.Type.Secondary
+                        color: playListEntry.textColor
                     }
                 }
             }
@@ -275,34 +263,18 @@ BasePlayListDelegate {
                 id: buttonRowLoader
 
                 active: false
-                // visible: active && !playListEntry.editingRating
                 visible: playListEntry.hovered
 
                 sourceComponent: Row {
                     id: buttonRow
 
                     FlatButtonWithToolTip {
-                        id: locateFileButton
-                        action: actionList.locateFileAction
-                        visible: actionList.locateFileAction.visible
-
-                        KeyNavigation.left: favoriteButton
-                        KeyNavigation.right: infoButton
-                    }
-
-                    FlatButtonWithToolTip {
                         id: infoButton
                         action: actionList.infoAction
                         visible: actionList.infoAction.visible
+                        icon.color: playListEntry.iconColor
 
-                        KeyNavigation.right: playPauseButton
-                    }
-
-                    FlatButtonWithToolTip {
-                        id: playPauseButton
-                        action: actionList.playPauseAction
-                        visible: actionList.playPauseAction.visible
-
+                        KeyNavigation.left: favoriteButton
                         KeyNavigation.right: removeButton
                     }
 
@@ -310,6 +282,7 @@ BasePlayListDelegate {
                         id: removeButton
                         action: actionList.removeAction
                         visible: actionList.removeAction.visible
+                        icon.color: playListEntry.iconColor
 
                         KeyNavigation.right: ratingButton
                     }
@@ -318,6 +291,7 @@ BasePlayListDelegate {
                         id: ratingButton
                         action: actionList.ratingAction
                         visible: actionList.ratingAction.visible
+                        icon.color: playListEntry.iconColor
 
                         KeyNavigation.right: favoriteButton
                     }
@@ -326,8 +300,9 @@ BasePlayListDelegate {
                         id: favoriteButton
                         action: actionList.favoriteAction
                         visible: actionList.favoriteAction.visible
+                        icon.color: playListEntry.iconColor
 
-                        KeyNavigation.right: locateFileButton
+                        KeyNavigation.right: infoButton
                     }
 
                     data: Binding {
@@ -339,8 +314,9 @@ BasePlayListDelegate {
 
             FlatButtonWithToolTip {
                 visible: playListEntry.editingRating && playListEntry.wideMode
-                text: i18nc("@action:button", "Cancel rating this track")
+                text: KI18n.i18nc("@action:button", "Cancel rating this track")
                 icon.name: "dialog-cancel"
+                icon.color: playListEntry.iconColor
                 onClicked: { playListEntry.editingRating = false; }
             }
 
@@ -348,9 +324,11 @@ BasePlayListDelegate {
                 id: ratingWidget
 
                 readOnly: !playListEntry.editingRating
-                starRating: rating
+                starRating: playListEntry.rating
 
-                visible: (playListEntry.editingRating || (rating > 0 && !playListEntry.hovered && !playListEntry.hasActiveFocus && !simpleMode && !ElisaApplication.useFavoriteStyleRatings)) && playListEntry.wideMode
+                visible: (playListEntry.editingRating || (playListEntry.rating > 0 && !playListEntry.hovered && !playListEntry.hasActiveFocus && !playListEntry.simpleMode && !ElisaApplication.useFavoriteStyleRatings)) && playListEntry.wideMode
+
+                iconColor: playListEntry.iconColor
 
                 onRatingEdited: {
                     ElisaApplication.musicManager.updateSingleFileMetaData(playListEntry.fileName, DataTypes.RatingRole, starRating);
@@ -361,20 +339,22 @@ BasePlayListDelegate {
             Loader {
                 id: favoriteMark
 
-                visible: playListEntry.isFavorite && !playListEntry.hovered && !playListEntry.hasActiveFocus && !simpleMode && ElisaApplication.useFavoriteStyleRatings
+                visible: playListEntry.isFavorite && !playListEntry.hovered && !playListEntry.hasActiveFocus && !playListEntry.simpleMode && ElisaApplication.useFavoriteStyleRatings
 
                 sourceComponent: FlatButtonWithToolTip {
                     visible: action.visible
                     action: actionList.favoriteAction
+                    icon.color: playListEntry.iconColor
                 }
             }
 
 
             LabelWithToolTip {
                 id: durationLabel
-                text: duration
-                font.weight: isPlaying ? Font.Bold : Font.Normal
+                text: playListEntry.duration
+                font.weight: playListEntry.isPlaying ? Font.Bold : Font.Normal
                 font.features: { "tnum": 1 }
+                color: playListEntry.textColor
             }
 
             Loader {
@@ -385,11 +365,12 @@ BasePlayListDelegate {
                     id: menuButton
 
                     icon.name: "overflow-menu"
-                    text: entryType === ElisaUtils.Track ? i18nc("@action:button", "Track Options") : i18nc("@action:button", "Radio Options")
+                    icon.color: playListEntry.iconColor
+                    text: playListEntry.entryType === ElisaUtils.Track ? KI18n.i18nc("@action:button", "Track Options") : KI18n.i18nc("@action:button", "Radio Options")
                     down: pressed || menuLoader.menuVisible
-                    onPressed: menuLoader.item.open()
-                    Keys.onReturnPressed: menuLoader.item.open()
-                    Keys.onEnterPressed: menuLoader.item.open()
+                    onPressed: (menuLoader.item as Menu).open()
+                    Keys.onReturnPressed: (menuLoader.item as Menu).open()
+                    Keys.onEnterPressed: (menuLoader.item as Menu).open()
                     activeFocusOnTab: playListEntry.isSelected
 
                     Binding {
@@ -411,18 +392,12 @@ BasePlayListDelegate {
                     dim: false
                     modal: true
                     x: -width
-                    parent: menuButtonLoader.item
+                    parent: menuButtonLoader.item as FlatButtonWithToolTip
 
                     onVisibleChanged: menuLoader.menuVisible = visible
 
                     MenuItem {
-                        action: actionList.playPauseAction
-                    }
-                    MenuItem {
                         action: actionList.infoAction
-                    }
-                    MenuItem {
-                        action: actionList.locateFileAction
                     }
                     MenuItem {
                         action: actionList.ratingAction
@@ -447,18 +422,16 @@ BasePlayListDelegate {
             },
             State {
                 name: 'hovered'
-                when: playListEntry.hovered && !playListEntry.hasActiveFocus && !simpleMode
+                when: playListEntry.hovered && !playListEntry.hasActiveFocus && !playListEntry.simpleMode
                 PropertyChanges {
-                    target: buttonRowLoader
-                    active: playListEntry.wideMode
+                    buttonRowLoader.active: playListEntry.wideMode
                 }
             },
             State {
                 name: 'focused'
-                when: playListEntry.hasActiveFocus && !simpleMode
+                when: playListEntry.hasActiveFocus && !playListEntry.simpleMode
                 PropertyChanges {
-                    target: buttonRowLoader
-                    active: playListEntry.wideMode
+                    buttonRowLoader.active: playListEntry.wideMode
                 }
             }
         ]

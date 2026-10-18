@@ -7,10 +7,11 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.10
-import QtQuick.Controls 2.2
-import QtQuick.Layouts 1.2
-import org.kde.kirigami 2.5 as Kirigami
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 RowLayout {
@@ -152,13 +153,13 @@ RowLayout {
             FlatButtonWithToolTip {
                 readonly property bool isFavorite: delegateRow.display === 10
 
-                text: isFavorite ? i18nc("@action:button", "Un-mark this song as a favorite") : i18nc("@action:button", "Mark this song as a favorite")
-                icon.name: isFavorite ? "rating" : "rating-unrated"
+                text: isFavorite ? KI18n.i18nc("@action:button", "Un-mark this song as a favorite") : KI18n.i18nc("@action:button", "Mark this song as a favorite")
+                icon.name: isFavorite ? "starred" : "non-starred"
 
                 onClicked: {
                     const newRating = isFavorite ? 0 : 10;
                     // Change icon immediately in case backend is slow
-                    icon.name = isFavorite ? "rating-unrated" : "rating";
+                    icon.name = isFavorite ? "non-starred" : "starred";
                     ElisaApplication.musicManager.updateSingleFileMetaData(delegateRow.url, DataTypes.RatingRole, newRating)
                     delegateRow.edited()
                 }
@@ -203,7 +204,7 @@ RowLayout {
         Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
 
         icon.name: 'delete'
-        text: i18nc("@action:button remove a metadata tag", "Remove this tag")
+        text: KI18n.i18nc("@action:button remove a metadata tag", "Remove this tag")
 
         visible: !delegateRow.readOnly && delegateRow.hasData && delegateRow.isRemovable
         onClicked: delegateRow.deleteField()
@@ -211,7 +212,7 @@ RowLayout {
 
     Button {
         icon.name: 'list-add'
-        text: i18nc("@action:button", "Add tag")
+        text: KI18n.i18nc("@action:button", "Add tag")
         visible: !delegateRow.readOnly && !delegateRow.hasData
 
         onClicked: delegateRow.addField()

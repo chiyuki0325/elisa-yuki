@@ -7,12 +7,13 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQml 2.2
-import QtQuick 2.15
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.15
+import QtQml
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
 import QtQuick.Effects as FX
-import org.kde.kirigami 2.8 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 Item {
@@ -89,8 +90,8 @@ Item {
 
             icon.name: "view-sort"
             text: sortMenu.sortRoleName !== ""
-                ? i18nc("@label:listbox Sort By Menu Title with no sort selected", "Sort: %1", sortMenu.sortRoleName)
-                : i18nc("@label:listbox Sort By Menu Title with no sort selected", "Sort")
+                ? KI18n.i18nc("@label:listbox Sort By Menu Title with no sort selected", "Sort: %1", sortMenu.sortRoleName)
+                : KI18n.i18nc("@label:listbox Sort By Menu Title with no sort selected", "Sort")
 
             onPressed: openMenu()
             Keys.onReturnPressed: openMenu()
@@ -104,8 +105,8 @@ Item {
             Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
             Kirigami.Theme.inherit: false
             objectName: "createRadioButton"
-            text: i18nc("@action:button", "Add Radio")
-            ToolTip.text: i18nc("@info:tooltip", "Add radio")
+            text: KI18n.i18nc("@action:button", "Add Radio")
+            ToolTip.text: KI18n.i18nc("@info:tooltip", "Add radio")
             icon.name: "list-add"
             display: Kirigami.Settings.isMobile && navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
             onClicked: navigationBar.createRadio()
@@ -117,8 +118,8 @@ Item {
             Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
             Kirigami.Theme.inherit: false
             objectName: "enqueueButton"
-            text: i18nc("@action:button", "Add to Playlist")
-            ToolTip.text: i18nc("@info:tooltip", "Add to playlist")
+            text: KI18n.i18nc("@action:button", "Add to Playlist")
+            ToolTip.text: KI18n.i18nc("@info:tooltip", "Add to playlist")
             icon.name: "list-add"
             enabled: navigationBar.canEnqueueView
             display: Kirigami.Settings.isMobile && navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
@@ -131,8 +132,8 @@ Item {
             Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
             Kirigami.Theme.inherit: false
             objectName: "replaceAndPlayButton"
-            text: i18nc("@action:button", "Play Now, Replacing Current Playlist")
-            ToolTip.text: i18nc("@info:tooltip", "Play now, replacing current playlist")
+            text: KI18n.i18nc("@action:button", "Play Now, Replacing Current Playlist")
+            ToolTip.text: KI18n.i18nc("@info:tooltip", "Play now, replacing current playlist")
             icon.name: "media-playback-start"
             enabled: navigationBar.canEnqueueView
             display: Kirigami.Settings.isMobile && navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
@@ -144,8 +145,8 @@ Item {
         FlatButtonWithToolTip {
             Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
             Kirigami.Theme.inherit: false
-            text: i18nc("@action:button Add as the next track(s) in the playlist", "Play Next")
-            ToolTip.text: i18nc("@info:tooltip", "Play next in playlist")
+            text: KI18n.i18nc("@action:button Add as the next track(s) in the playlist", "Play Next")
+            ToolTip.text: KI18n.i18nc("@info:tooltip", "Play next in playlist")
             icon.name: "media-playlist-append-next"
             display: Kirigami.Settings.isMobile && navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
             onClicked: navigationBar.playNext()
@@ -157,8 +158,8 @@ Item {
             Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
             Kirigami.Theme.inherit: false
             objectName: "showArtistButton"
-            text: i18nc("@action:button navigate to the view for artist of this album", "Display Artist")
-            ToolTip.text: i18nc("@info:tooltip navigate to the view for artist of this album", "Display Artist")
+            text: KI18n.i18nc("@action:button navigate to the view for artist of this album", "Display Artist")
+            ToolTip.text: KI18n.i18nc("@info:tooltip navigate to the view for artist of this album", "Display Artist")
             icon.name: "view-media-artist"
             display: Kirigami.Settings.isMobile && navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
             onClicked: if (navigationBar.secondaryTitle) { navigationBar.showArtist(navigationBar.secondaryTitle) }
@@ -172,8 +173,8 @@ Item {
             action: Kirigami.Action {
                 fromQAction: ElisaApplication.action("toggle_playlist")
             }
-            text: i18nc("@action:button", "Show Playlist")
-            ToolTip.text: i18nc("@info:tooltip", "Show playlist")
+            text: KI18n.i18nc("@action:button", "Show Playlist")
+            ToolTip.text: KI18n.i18nc("@info:tooltip", "Show playlist")
             icon.name: "view-media-playlist"
             // display: navigationBar.isWidescreen ? AbstractButton.TextBesideIcon : AbstractButton.IconOnly
             display: AbstractButton.IconOnly
@@ -186,11 +187,11 @@ Item {
             Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
             Kirigami.Theme.inherit: false
             text: navigationBar.viewStyle === ViewManager.ListStyle
-                ? i18nc("@action:button", "View as Icon Grid")
-                : i18nc("@action:button", "View as List")
+                ? KI18n.i18nc("@action:button", "View as Icon Grid")
+                : KI18n.i18nc("@action:button", "View as List")
             ToolTip.text: navigationBar.viewStyle === ViewManager.ListStyle
-                ? i18nc("@info:tooltip", "View as icon grid")
-                : i18nc("@info:tooltip", "View as list")
+                ? KI18n.i18nc("@info:tooltip", "View as icon grid")
+                : KI18n.i18nc("@info:tooltip", "View as list")
             icon.name: {
                 switch (navigationBar.viewStyle) {
                 case ViewManager.ListStyle:
@@ -211,6 +212,29 @@ Item {
                 }
             }
         }
+    }
+
+    // Components to separate out rendering of icons loaded from themes and images used for album art so album art can display with the correct aspect ratio
+
+    Component {
+        id: headerThemeIcon
+        Kirigami.Icon {
+            source: navigationBar.image
+        }
+    }
+
+    component HeaderCoverImage: Image {
+            source: navigationBar.image
+            // Async load as images may be somewhat large
+            asynchronous: true
+            fillMode: Image.PreserveAspectFit
+            sourceSize.height:Kirigami.Units.iconSizes.medium * Screen.devicePixelRatio
+            sourceSize.width:Kirigami.Units.iconSizes.medium * Screen.devicePixelRatio
+    }
+
+    Component {
+        id: headerImageIcon
+        HeaderCoverImage {}
     }
 
     ToolBar {
@@ -242,7 +266,7 @@ Item {
                     id: showSidebarButton
                     objectName: "showSidebarButton"
                     visible: Kirigami.Settings.isMobile
-                    text: i18nc("@action:button", "Open sidebar")
+                    text: KI18n.i18nc("@action:button", "Open sidebar")
                     icon.name: "open-menu-symbolic"
                     onClicked: mainWindow.globalDrawer.open()
                 }
@@ -250,20 +274,21 @@ Item {
                     id: goPreviousButton
                     objectName: "goPreviousButton"
                     visible: navigationBar.enableGoBack
-                    text: i18nc("@action:button navigate back in the view's stack", "Back")
+                    text: KI18n.i18nc("@action:button navigate back in the view's stack", "Back")
                     icon.name: (Application.layoutDirection === Qt.RightToLeft) ? "go-next" : "go-previous"
                     onClicked: navigationBar.goBack()
                 }
-                Kirigami.Icon {
+                Loader {
                     id: mainIcon
+                    // Check if the image being loaded is a theme icon or an image
+                    readonly property bool isThemeIcon: navigationBar.image.toString().startsWith("image://icon/")
                     visible: navigationBar.image.toString().length > 0
                              && !Kirigami.Settings.isMobile // On mobile, we want more header space
                              && navigationBar.enableGoBack // For top-level pages, the icon is redundant
-                    source: navigationBar.image
-
+                    sourceComponent: isThemeIcon ? headerThemeIcon : headerImageIcon
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                    Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                    Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+                    Layout.maximumHeight: Kirigami.Units.iconSizes.medium
+                    Layout.maximumWidth: Kirigami.Units.iconSizes.medium
                 }
                 ColumnLayout {
                     id: authorAndAlbumLayout
@@ -287,20 +312,17 @@ Item {
                         Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
                         Layout.fillWidth: true
 
-                        visible: secondaryTitle !== ""
-                        opacity: 0.6
+                        visible: navigationBar.secondaryTitle !== ""
+                        opacity: Theme.subtitleOpacity
 
-                        text: secondaryTitle
+                        text: navigationBar.secondaryTitle
                         elide: Text.ElideRight
 
-                        TapHandler {
-                            id: showArtistTaphandler
-                            enabled: navigationBar.allowArtistNavigation && !navigationBar.showCreateRadioButton
-                            onTapped: navigationBar.showArtist(secondaryTitle)
-                        }
-                        HoverHandler {
-                            enabled: showArtistTaphandler.enabled
+                        MouseArea {
+                            width: Math.min(parent.implicitWidth, parent.width)
+                            height: parent.height
                             cursorShape: Qt.PointingHandCursor
+                            onClicked: navigationBar.showArtist(navigationBar.secondaryTitle)
                         }
                     }
                 }
@@ -333,10 +355,9 @@ Item {
                     Kirigami.Theme.colorSet: Kirigami.Settings.isMobile ? Kirigami.Theme.Complementary : Kirigami.Theme.Window
                     Kirigami.Theme.inherit: false
                     objectName: "showFilterButton"
-                    visible: !navigationBar.showCreateRadioButton
                     text: !navigationBar.expandedFilterView
-                    ? i18nc("@action:button displayed as @info:tooltip Show filters in the navigation bar", "Show search and filter toolbar")
-                    : i18nc("@action:button displayed as @info:tooltip Hide filters in the navigation bar", "Hide search and filter toolbar")
+                    ? KI18n.i18nc("@action:button displayed as @info:tooltip Show filters in the navigation bar", "Show search and filter toolbar")
+                    : KI18n.i18nc("@action:button displayed as @info:tooltip Hide filters in the navigation bar", "Hide search and filter toolbar")
                     icon.name: "search"
                     checkable: true
                     checked: navigationBar.expandedFilterView
@@ -428,10 +449,11 @@ Item {
 
                     Accessible.role: Accessible.EditableText
 
-                    placeholderText: navigationBar.displaySingleAlbum
-                        ? i18nc("@info:placeholder track view filter single album", "Search for track name, artist, etc.")
-                        : i18nc("@info:placeholder track view filter general", "Search for album name, artist, etc.")
-
+                    placeholderText: navigationBar.showCreateRadioButton
+                        ? KI18n.i18nc("@info:placeholder radio view filter", "Search for radio station")
+                        : (navigationBar.displaySingleAlbum
+                            ? KI18n.i18nc("@info:placeholder track view filter single album", "Search for track name, artist, etc.")
+                            : KI18n.i18nc("@info:placeholder track view filter general", "Search for album name, artist, etc."))
                     Keys.onEscapePressed: persistentSettings.expandedFilterView = false;
                 }
                 Item {
@@ -439,7 +461,7 @@ Item {
                     visible: navigationBar.showRating && !ElisaApplication.useFavoriteStyleRatings
                 }
                 LabelWithToolTip {
-                    text: i18nc("@label:chooser", "Filter by rating: ")
+                    text: KI18n.i18nc("@label:chooser", "Filter by rating: ")
 
                     visible: navigationBar.showRating && !ElisaApplication.useFavoriteStyleRatings
                 }
@@ -457,8 +479,8 @@ Item {
                     flat: false
                     display: AbstractButton.TextBesideIcon
 
-                    text: i18nc("@action:button", "Only Show Favorites")
-                    icon.name: "rating"
+                    text: KI18n.i18nc("@action:button", "Only Show Favorites")
+                    icon.name: "starred"
                     checkable: true
                     checked: ratingFilter.starRating === 10
                     onToggled: {
@@ -491,15 +513,11 @@ Item {
                 opacity: 0.8
             }
 
-            ImageWithFallback {
+            Image {
                 anchors.fill: parent
 
-                source: ElisaApplication.manageHeaderBar.image
-                fallback: Theme.defaultBackgroundImage
-                asynchronous: true
-
-                sourceSize.width: Screen.width
-                fillMode: Image.PreserveAspectCrop
+                readonly property url image: ElisaApplication.managerHeaderBar.image
+                source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? Theme.defaultBackgroundImage : image
 
                 layer.enabled: GraphicsInfo.api !== GraphicsInfo.Software
                 layer.effect: FX.MultiEffect {

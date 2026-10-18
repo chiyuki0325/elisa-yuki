@@ -34,6 +34,11 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+namespace
+{
+const QString testConnectionName = u"testDb"_s;
+}
+
 class DatabaseInterfaceTests: public QObject, public DatabaseTestData
 {
     Q_OBJECT
@@ -64,6 +69,19 @@ private Q_SLOTS:
         qRegisterMetaType<DataTypes::ListRadioDataType>("ListRadioDataType");
     }
 
+    void cleanup()
+    {
+        QSqlDatabase::removeDatabase(testConnectionName);
+    }
+
+    void initDatabase()
+    {
+        DatabaseInterface musicDb;
+        QSignalSpy databaseErrorSpy{&musicDb, &DatabaseInterface::databaseError};
+        musicDb.init(testConnectionName);
+        QCOMPARE(databaseErrorSpy.count(), 0);
+    }
+
     void avoidCrashInTrackIdFromTitleAlbumArtist()
     {
         DatabaseInterface musicDb;
@@ -91,7 +109,7 @@ private Q_SLOTS:
     void verifyNumberOfRadioStations()
     {
         DatabaseInterface musicDb;
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
         QSignalSpy musicDbRadioAddedSpy(&musicDb,&DatabaseInterface::radioAdded);
         QCOMPARE(musicDb.allRadiosData().count(), 18);
     }
@@ -99,7 +117,7 @@ private Q_SLOTS:
     void addOneRadio()
     {
         DatabaseInterface musicDb;
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
         QSignalSpy musicDbRadioAddedSpy(&musicDb,&DatabaseInterface::radioAdded);
         int initialCount = musicDb.allRadiosData().count();
 
@@ -122,7 +140,7 @@ private Q_SLOTS:
 
     void modifyOneRadio(){
         DatabaseInterface musicDb;
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
         QSignalSpy musicDbRadioAddedSpy(&musicDb,&DatabaseInterface::radioAdded);
         QSignalSpy musicDbRadioModifiedSpy(&musicDb,&DatabaseInterface::radioModified);
         int initialCount = musicDb.allRadiosData().count();
@@ -160,7 +178,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -248,7 +266,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -337,7 +355,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -425,7 +443,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -512,7 +530,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -610,7 +628,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -721,7 +739,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -858,7 +876,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -999,7 +1017,7 @@ private Q_SLOTS:
         QSignalSpy musicDbTrackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy musicDbErrorSpy(&musicDb, &DatabaseInterface::databaseError);
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         musicDb.insertTracksList(mNewTracks);
 
@@ -1289,7 +1307,7 @@ private Q_SLOTS:
 
         QSignalSpy musicDbTrackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         musicDb.insertTracksList(mNewTracks);
         musicDb.insertTracksList(mNewTracks);
@@ -2042,7 +2060,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -2153,7 +2171,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -2304,7 +2322,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -2405,7 +2423,7 @@ private Q_SLOTS:
     void modifyArtist()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2461,7 +2479,7 @@ private Q_SLOTS:
     void removeArtist()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2516,7 +2534,7 @@ private Q_SLOTS:
     void modifyGenre()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2572,7 +2590,7 @@ private Q_SLOTS:
     void removeGenre()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2627,7 +2645,7 @@ private Q_SLOTS:
     void modifyComposer()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2683,7 +2701,7 @@ private Q_SLOTS:
     void removeComposer()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2738,7 +2756,7 @@ private Q_SLOTS:
     void modifyLyricist()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2794,7 +2812,7 @@ private Q_SLOTS:
     void removeLyricist()
     {
         DatabaseInterface musicDb;
-        musicDb.init(u"testDb"_s);
+        musicDb.init(testConnectionName);
 
         QSignalSpy trackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy trackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
@@ -2850,7 +2868,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -2923,7 +2941,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -3103,7 +3121,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -3309,7 +3327,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -3505,7 +3523,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -3691,7 +3709,7 @@ private Q_SLOTS:
         DataTypes::TrackDataType databaseTrack;
 
         DatabaseInterface musicDb;
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbTrackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
         QSignalSpy musicDbTrackRemovedSpy(&musicDb, &DatabaseInterface::trackRemoved);
@@ -3755,7 +3773,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -3831,7 +3849,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -3909,7 +3927,7 @@ private Q_SLOTS:
             QSignalSpy musicDbTrackAddedSpy(&musicDb, &DatabaseInterface::tracksAdded);
             QSignalSpy musicDbDatabaseErrorSpy(&musicDb, &DatabaseInterface::databaseError);
 
-            musicDb.init(QStringLiteral("testDb"), databaseFile.fileName());
+            musicDb.init(testConnectionName, databaseFile.fileName());
 
             musicDb.insertTracksList(mNewTracks);
 
@@ -3983,7 +4001,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4077,7 +4095,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4204,7 +4222,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4347,7 +4365,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4433,7 +4451,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4605,7 +4623,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4787,7 +4805,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4859,7 +4877,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4931,7 +4949,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -4987,7 +5005,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5083,7 +5101,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5155,7 +5173,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5210,7 +5228,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5282,7 +5300,7 @@ private Q_SLOTS:
 
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"), dbTestFile);
+        musicDb.init(testConnectionName, dbTestFile);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5312,7 +5330,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5524,7 +5542,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5605,7 +5623,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5664,7 +5682,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5731,7 +5749,7 @@ private Q_SLOTS:
         QSignalSpy musicDbErrorSpy(&musicDb, &DatabaseInterface::databaseError);
         QSignalSpy musicDbTrackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         musicDb.insertTracksList(mNewTracks);
 
@@ -5788,7 +5806,7 @@ private Q_SLOTS:
         QSignalSpy musicDbErrorSpy(&musicDb, &DatabaseInterface::databaseError);
         QSignalSpy musicDbTrackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         musicDb.insertTracksList(mNewTracks);
 
@@ -5845,7 +5863,7 @@ private Q_SLOTS:
         QSignalSpy musicDbErrorSpy(&musicDb, &DatabaseInterface::databaseError);
         QSignalSpy musicDbTrackModifiedSpy(&musicDb, &DatabaseInterface::trackModified);
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         musicDb.insertTracksList(mNewTracks);
 
@@ -5900,7 +5918,7 @@ private Q_SLOTS:
     {
         DatabaseInterface musicDb;
 
-        musicDb.init(QStringLiteral("testDb"));
+        musicDb.init(testConnectionName);
 
         QSignalSpy musicDbArtistAddedSpy(&musicDb, &DatabaseInterface::artistsAdded);
         QSignalSpy musicDbAlbumAddedSpy(&musicDb, &DatabaseInterface::albumsAdded);
@@ -5992,7 +6010,7 @@ private Q_SLOTS:
 
     void testInvalidDatabase()
     {
-        const auto dbName = QStringLiteral("testDb");
+        const auto dbName = testConnectionName;
         QString databaseFileName;
 
         {

@@ -8,15 +8,16 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.15
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.3
-import QtQuick.Window 2.2
-import Qt5Compat.GraphicalEffects
-import org.kde.kirigami 2.19 as Kirigami
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Window
+import QtQuick.Effects as FX
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
-FocusScope {
+ItemDelegate {
     id: mediaTrack
 
     property url trackUrl
@@ -37,12 +38,20 @@ FocusScope {
     property bool editingRating: false
     readonly property bool isFavorite: rating === 10
 
-    signal clicked()
+    readonly property bool imageVisible: delegateLoaded && (detailedView || Kirigami.Settings.isMobile)
+
+    readonly property bool hasActiveFocus: activeFocus || focusScope.activeFocus
+
+    readonly property color textColor: highlighted || down ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+    readonly property color iconColor: textColor
+
     signal enqueue()
     signal playNext()
     signal replaceAndPlay(var url)
     signal callOpenMetaDataView(var url, var entryType)
     signal trackRatingChanged(var url, var rating)
+
+    Kirigami.Theme.useAlternateBackgroundColor: isAlternateColor
 
     Accessible.role: Accessible.ListItem
     Accessible.name: title
@@ -56,38 +65,36 @@ FocusScope {
     ListView.onPooled: delegateLoaded = false
     ListView.onReused: delegateLoaded = true
 
-    height: detailedView ? Theme.listDelegateHeight : Theme.listDelegateSingleLineHeight
-
     property list<Kirigami.Action> actions: [
         Kirigami.Action {
-            text: i18nc("@action:button Show the file for this song in the file manager", "Show in folder")
+            text: KI18n.i18nc("@action:button Show the file for this song in the file manager", "Show in folder")
             icon.name: "document-open-folder"
             onTriggered: ElisaApplication.showInFolder(mediaTrack.trackUrl)
 
             visible: mediaTrack.trackUrl.toString().substring(0, 7) === 'file://'
         },
         Kirigami.Action {
-            text: i18nc("@action:button Show track metadata", "View details")
+            text: KI18n.i18nc("@action:button Show track metadata", "View details")
             icon.name: "help-about"
             onTriggered: mediaTrack.callOpenMetaDataView(mediaTrack.trackUrl, mediaTrack.dataType)
         },
         Kirigami.Action {
-            text: i18nc("@action:button", "Add to playlist")
+            text: KI18n.i18nc("@action:button", "Add to playlist")
             icon.name: "list-add"
             onTriggered: mediaTrack.enqueue()
         },
         Kirigami.Action {
-            text: i18nc("@action:button", "Play next")
+            text: KI18n.i18nc("@action:button", "Play next")
             icon.name: "media-playlist-append-next-symbolic"
             onTriggered: mediaTrack.playNext()
         },
         Kirigami.Action {
-            text: i18nc("@action:button", "Play from here, replacing current playlist")
+            text: KI18n.i18nc("@action:button", "Play from here, replacing current playlist")
             icon.name: "media-playback-start-symbolic"
             onTriggered: mediaTrack.replaceAndPlay(mediaTrack.trackUrl)
         },
         Kirigami.Action {
-            text: i18nc("@action:button", "Set track rating")
+            text: KI18n.i18nc("@action:button", "Set track rating")
             icon.name: "view-media-favorite"
             onTriggered: {
                 mediaTrack.editingRating = true;
@@ -95,13 +102,13 @@ FocusScope {
             visible: !ElisaApplication.useFavoriteStyleRatings && !Kirigami.Settings.isMobile
         },
         Kirigami.Action {
-            text: mediaTrack.isFavorite ? i18nc("@action:button", "Un-mark this song as a favorite") : i18nc("@action:button", "Mark this song as a favorite")
-            icon.name: mediaTrack.isFavorite ? "rating" : "rating-unrated"
+            text: mediaTrack.isFavorite ? KI18n.i18nc("@action:button", "Un-mark this song as a favorite") : KI18n.i18nc("@action:button", "Mark this song as a favorite")
+            icon.name: mediaTrack.isFavorite ? "starred" : "non-starred"
 
             onTriggered: {
                 const newRating = mediaTrack.isFavorite ? 0 : 10
                 // Change icon immediately in case backend is slow
-                icon.name = mediaTrack.isFavorite ? "rating-unrated" : "rating"
+                icon.name = mediaTrack.isFavorite ? "non-starred" : "starred"
                 mediaTrack.trackRatingChanged(mediaTrack.trackUrl, newRating);
             }
 
@@ -112,78 +119,54 @@ FocusScope {
     // open mobile context menu
     function openContextMenu() {
         contextMenuLoader.active = true;
-        contextMenuLoader.item.open();
+        (contextMenuLoader.item as Kirigami.MenuDialog).open();
     }
 
-    onActiveFocusChanged: {
-        if (!activeFocus) {
+    onHasActiveFocusChanged: {
+        if (!hasActiveFocus) {
             editingRating = false
         }
     }
 
+    onClicked: replaceAndPlay(trackUrl)
 
-    Rectangle {
-        id: rowRoot
+    contentItem: FocusScope {
+        id: focusScope
 
-        anchors.fill: parent
-        z: 1
-
-        color: (isAlternateColor ? palette.alternateBase : palette.base)
-    }
-
-    MouseArea {
-        id: hoverArea
-
-        anchors.fill: parent
-        z: 2
-
-        hoverEnabled: true
-        acceptedButtons: Qt.LeftButton
-
-        onClicked: {
-            mediaTrack.clicked()
-            replaceAndPlay(trackUrl);
-        }
+        implicitHeight: childrenRect.height
 
         RowLayout {
-            anchors {
-                fill: parent
-                leftMargin: Kirigami.Units.largeSpacing
-                rightMargin: Kirigami.Units.largeSpacing
-            }
+            width: parent.width
+            height: implicitHeight
 
             spacing: Kirigami.Units.largeSpacing
 
             Loader {
-                active: mediaTrack.delegateLoaded && (detailedView || Kirigami.Settings.isMobile) // cover is always visible on mobile
+                active: mediaTrack.imageVisible
+                visible: active
 
                 // mobile delegate needs more margins
-                Layout.preferredWidth: mediaTrack.height - Kirigami.Units.smallSpacing * (Kirigami.Settings.isMobile ? 2 : 1)
-                Layout.preferredHeight: mediaTrack.height - Kirigami.Units.smallSpacing * (Kirigami.Settings.isMobile ? 2 : 1)
+                Layout.preferredWidth: Theme.listDelegateIconHeight
+                Layout.preferredHeight: Theme.listDelegateIconHeight
 
                 Layout.alignment: Qt.AlignCenter
 
-                sourceComponent: ImageWithFallback {
+                sourceComponent: Kirigami.Icon {
                     id: coverImageElement
 
-                    sourceSize.width: (mediaTrack.height - Kirigami.Units.smallSpacing * (Kirigami.Settings.isMobile ? 2 : 1)) * Screen.devicePixelRatio
-                    sourceSize.height: (mediaTrack.height - Kirigami.Units.smallSpacing * (Kirigami.Settings.isMobile ? 2 : 1)) * Screen.devicePixelRatio
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-
-                    source: imageUrl
+                    readonly property url image: mediaTrack.imageUrl
+                    source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? "not-an-icon" : image
                     fallback: Theme.defaultAlbumImage
 
-                    asynchronous: true
+                    roundToIconSize: false
 
+                    readonly property bool usingFallback: source === fallback
                     layer.enabled: GraphicsInfo.api !== GraphicsInfo.Software && !usingFallback && !Kirigami.Settings.isMobile // disable drop shadow for mobile
 
-                    layer.effect: DropShadow {
-                        source: coverImageElement
-                        radius: 8
-                        samples: (radius * 2) + 1
-                        cached: true
-                        color: palette.shadow
+                    layer.effect: FX.MultiEffect {
+                        blurMax: 8
+                        shadowEnabled: true
+                        shadowColor: palette.shadow
                     }
                 }
             }
@@ -194,6 +177,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                Layout.preferredHeight: Theme.listDelegateButtonHeight
 
                 spacing: Kirigami.Units.smallSpacing / 2
 
@@ -204,40 +188,40 @@ FocusScope {
                     Layout.fillWidth: true
 
                     text: {
-                        if (detailedView) {
-                            return title;
+                        if (mediaTrack.detailedView) {
+                            return mediaTrack.title;
                         } else if (Kirigami.Settings.isMobile) {
                             // specific artist/album page (mobile)
                             // not detailed view refers to an album page, in which we should put track numbers
-                            if (trackNumber !== 0 && trackNumber !== -1 && trackNumber !== undefined) {
-                                return i18nc("@item:intable %1: track number. %2: track title.",
+                            if (mediaTrack.trackNumber !== 0 && mediaTrack.trackNumber !== -1 && mediaTrack.trackNumber !== undefined) {
+                                return KI18n.i18nc("@item:intable %1: track number. %2: track title.",
                                         "%1 – %2",
-                                        trackNumber.toLocaleString(Qt.locale(), 'f', 0),
-                                        title);
+                                        mediaTrack.trackNumber.toLocaleString(Qt.locale(), 'f', 0),
+                                        mediaTrack.title);
                             } else {
-                                return title;
+                                return mediaTrack.title;
                             }
                         } else {
                             // specific artist/album page (desktop)
-                            if (trackNumber !== 0 && trackNumber !== -1 && trackNumber !== undefined) {
-                                if (albumArtist !== undefined && artist !== albumArtist) {
-                                    return i18nc("@item:intable %1: track number. %2: track title. %3: artist name",
+                            if (mediaTrack.trackNumber !== 0 && mediaTrack.trackNumber !== -1 && mediaTrack.trackNumber !== undefined) {
+                                if (mediaTrack.albumArtist !== undefined && mediaTrack.artist !== mediaTrack.albumArtist) {
+                                    return KI18n.i18nc("@item:intable %1: track number. %2: track title. %3: artist name",
                                                 "%1 – %2 – %3",
-                                                trackNumber.toLocaleString(Qt.locale(), 'f', 0),
-                                                title, artist);
+                                                mediaTrack.trackNumber.toLocaleString(Qt.locale(), 'f', 0),
+                                                mediaTrack.title, mediaTrack.artist);
                                 } else {
-                                    return i18nc("@item:intable %1: track number. %2: track title.",
+                                    return KI18n.i18nc("@item:intable %1: track number. %2: track title.",
                                                 "%1 – %2",
-                                                trackNumber.toLocaleString(Qt.locale(), 'f', 0),
-                                                title);
+                                                mediaTrack.trackNumber.toLocaleString(Qt.locale(), 'f', 0),
+                                                mediaTrack.title);
                                 }
                             } else {
-                                if (albumArtist !== undefined && artist !== albumArtist) {
-                                    return i18nc("@item:intable %1: track title. %2: artist name",
+                                if (mediaTrack.albumArtist !== undefined && mediaTrack.artist !== mediaTrack.albumArtist) {
+                                    return KI18n.i18nc("@item:intable %1: track title. %2: artist name",
                                                 "%1 – %2",
-                                                title, artist);
+                                                mediaTrack.title, mediaTrack.artist);
                                 } else {
-                                    return title;
+                                    return mediaTrack.title;
                                 }
                             }
                         }
@@ -245,6 +229,7 @@ FocusScope {
                     textFormat: Text.PlainText
 
                     elide: Text.ElideRight
+                    color: mediaTrack.textColor
                 }
 
                 // second row (shown for mobile, and desktop detailed view)
@@ -255,35 +240,37 @@ FocusScope {
 
                     text: {
                         let labelText = ""
-                        if (artist) {
-                            labelText += artist
+                        if (mediaTrack.artist) {
+                            labelText += mediaTrack.artist
                         }
-                        if (album !== '' && detailedView) { // don't show album name on not detailed view
-                            labelText += ' - ' + album
-                            if (!hideDiscNumber && discNumber !== -1) {
-                                labelText += ' - CD ' + discNumber
+                        if (mediaTrack.album !== '' && mediaTrack.detailedView) { // don't show album name on not detailed view
+                            labelText += ' - ' + mediaTrack.album
+                            if (!mediaTrack.hideDiscNumber && mediaTrack.discNumber !== -1) {
+                                labelText += ' - CD ' + mediaTrack.discNumber
                             }
                         }
                         return labelText;
                     }
                     horizontalAlignment: Text.AlignLeft
 
-                    visible: text.length > 0 && (Kirigami.Settings.isMobile || detailedView)
-                    opacity: 0.6
+                    visible: text.length > 0 && (Kirigami.Settings.isMobile || mediaTrack.detailedView)
+                    opacity: Theme.subtitleOpacity
                     textFormat: Text.PlainText
 
                     elide: Text.ElideRight
                     font: Kirigami.Theme.smallFont
+                    color: mediaTrack.textColor
                 }
             }
 
             // hover actions (for desktop)
             Loader {
                 id: hoverLoader
-                active: !Kirigami.Settings.isMobile && (hoverArea.containsMouse || mediaTrack.activeFocus) && !mediaTrack.editingRating
+                active: !Kirigami.Settings.isMobile && (mediaTrack.hovered || mediaTrack.hasActiveFocus) && !mediaTrack.editingRating
                 visible: active
 
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                Layout.preferredHeight: Theme.listDelegateButtonHeight
 
                 z: 1
 
@@ -296,10 +283,11 @@ FocusScope {
                         delegate: FlatButtonWithToolTip {
                             required property Kirigami.Action modelData
 
-                            width: Theme.listDelegateSingleLineHeight
-                            height: Theme.listDelegateSingleLineHeight
+                            width: Theme.listDelegateButtonHeight
+                            height: Theme.listDelegateButtonHeight
                             action: modelData
                             visible: modelData.visible
+                            icon.color: mediaTrack.iconColor
                         }
                     }
                 }
@@ -308,7 +296,7 @@ FocusScope {
             // ratings (desktop)
             Loader {
                 id: cancelRatingLoader
-                active: !Kirigami.Settings.isMobile && (hoverArea.containsMouse || mediaTrack.activeFocus)
+                active: !Kirigami.Settings.isMobile && (mediaTrack.hovered || mediaTrack.hasActiveFocus)
                 visible: active && mediaTrack.editingRating
 
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
@@ -316,26 +304,29 @@ FocusScope {
                 z: 1
 
                 sourceComponent: FlatButtonWithToolTip {
-                    width: Theme.listDelegateSingleLineHeight
-                    height: Theme.listDelegateSingleLineHeight
-                    text: i18nc("@action:button", "Cancel rating this track")
+                    width: Theme.listDelegateButtonHeight
+                    height: Theme.listDelegateButtonHeight
+                    text: KI18n.i18nc("@action:button", "Cancel rating this track")
                     icon.name: "dialog-cancel"
+                    icon.color: mediaTrack.iconColor
                     onClicked: { mediaTrack.editingRating = false; }
                 }
             }
             RatingStar {
                 id: ratingWidget
-                visible: !Kirigami.Settings.isMobile && (mediaTrack.editingRating || (rating > 0 && !hoverArea.containsMouse && !mediaTrack.activeFocus && !ElisaApplication.useFavoriteStyleRatings))
+                visible: !Kirigami.Settings.isMobile && (mediaTrack.editingRating || (mediaTrack.rating > 0 && !mediaTrack.hovered && !mediaTrack.hasActiveFocus && !ElisaApplication.useFavoriteStyleRatings))
 
                 readOnly: !mediaTrack.editingRating
 
-                starRating: rating
+                starRating: mediaTrack.rating
+
+                iconColor: mediaTrack.iconColor
 
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
                 onRatingEdited: {
                     mediaTrack.editingRating = false
-                    trackRatingChanged(trackUrl, starRating);
+                    mediaTrack.trackRatingChanged(mediaTrack.trackUrl, starRating);
                 }
             }
             Loader {
@@ -344,22 +335,24 @@ FocusScope {
                 visible: !Kirigami.Settings.isMobile && ElisaApplication.useFavoriteStyleRatings && !hoverLoader.active && mediaTrack.isFavorite
 
                 sourceComponent: FlatButtonWithToolTip {
-                    width: Theme.listDelegateSingleLineHeight
-                    height: Theme.listDelegateSingleLineHeight
-                    icon.name: mediaTrack.isFavorite ? "rating" : "rating-unrated"
+                    width: Theme.listDelegateButtonHeight
+                    height: Theme.listDelegateButtonHeight
+                    icon.name: mediaTrack.isFavorite ? "starred" : "non-starred"
+                    icon.color: mediaTrack.iconColor
                 }
             }
 
             LabelWithToolTip {
                 id: durationLabel
 
-                text: duration
+                text: mediaTrack.duration
 
                 horizontalAlignment: Text.AlignRight
 
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
                 font.features: { "tnum": 1 }
+                color: mediaTrack.textColor
             }
 
             // mobile context actions menu button
@@ -370,11 +363,12 @@ FocusScope {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.maximumHeight: parent.height
                 Layout.preferredWidth: height
-                Layout.preferredHeight: Theme.listDelegateSingleLineHeight - Kirigami.Units.smallSpacing * 2
+                Layout.preferredHeight: Theme.listDelegateButtonHeight
 
-                text: i18nc("@action:button", "Song Options")
+                text: KI18n.i18nc("@action:button", "Song Options")
                 icon.name: "view-more-symbolic"
-                onClicked: openContextMenu()
+                icon.color: mediaTrack.iconColor
+                onClicked: mediaTrack.openContextMenu()
             }
         }
     }
@@ -393,55 +387,4 @@ FocusScope {
             actions: mediaTrack.actions
         }
     }
-
-    states: [
-        State {
-            name: 'notSelected'
-            when: !mediaTrack.activeFocus && !hoverArea.containsMouse && !mediaTrack.isSelected
-            PropertyChanges {
-                target: rowRoot
-                color: (isAlternateColor ? palette.alternateBase : palette.base)
-            }
-            PropertyChanges {
-                target: rowRoot
-                opacity: 1
-            }
-        },
-        State {
-            name: 'hovered'
-            when: !mediaTrack.activeFocus && hoverArea.containsMouse
-            PropertyChanges {
-                target: rowRoot
-                color: palette.highlight
-            }
-            PropertyChanges {
-                target: rowRoot
-                opacity: 0.2
-            }
-        },
-        State {
-            name: 'selected'
-            when: !mediaTrack.activeFocus && mediaTrack.isSelected
-            PropertyChanges {
-                target: rowRoot
-                color: palette.mid
-            }
-            PropertyChanges {
-                target: rowRoot
-                opacity: 1.
-            }
-        },
-        State {
-            name: 'focused'
-            when: mediaTrack.activeFocus
-            PropertyChanges {
-                target: rowRoot
-                color: palette.highlight
-            }
-            PropertyChanges {
-                target: rowRoot
-                opacity: 0.6
-            }
-        }
-    ]
 }

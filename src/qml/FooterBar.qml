@@ -6,15 +6,15 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import org.kde.kirigami 2.5 as Kirigami
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 
 /*
-  This is intended as a area to show status messages and outher helpful stuff.
+  This is intended as a area to show status messages and other helpful stuff.
   For now it only supports TrackImportNotification
  */
 ToolBar {

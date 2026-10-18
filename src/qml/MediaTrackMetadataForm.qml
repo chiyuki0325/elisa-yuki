@@ -8,12 +8,13 @@
 
 pragma ComponentBehavior: Bound
 
-import QtQuick 2.7
-import QtQuick.Window 2.2
-import QtQuick.Layouts 1.2
+import QtQuick
+import QtQuick.Window
+import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 
-import org.kde.kirigami 2.13 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 Kirigami.FormLayout {
@@ -62,8 +63,8 @@ Kirigami.FormLayout {
     readonly property Dialogs.MessageDialog dirtyClosingDialog: Dialogs.MessageDialog {
         id: dirtyClosingDialog
 
-        title: i18nc("@title:window", "Warning")
-        text: i18nc("@info", 'You have unsaved changes. Do you want to apply the changes or discard them?')
+        title: KI18n.i18nc("@title:window", "Warning")
+        text: KI18n.i18nc("@info", 'You have unsaved changes. Do you want to apply the changes or discard them?')
         buttons: Dialogs.MessageDialog.Save | Dialogs.MessageDialog.Discard | Dialogs.MessageDialog.Cancel
 
         onButtonClicked: (button, role) => {
@@ -71,6 +72,7 @@ Kirigami.FormLayout {
                 case Dialogs.MessageDialog.Save: {
                     form.metadataModel.saveData()
                     form.close()
+                    break
                 }
                 case Dialogs.MessageDialog.Discard: {
                     form.metadataModel.resetData()
@@ -91,10 +93,10 @@ Kirigami.FormLayout {
     Kirigami.InlineMessage {
         id: formInvalidNotification
 
-        text: i18nc("@label", "Data is not valid. %1", metadataModel.errorMessage)
+        text: KI18n.i18nc("@label", "Data is not valid. %1", form.metadataModel.errorMessage)
         type: Kirigami.MessageType.Error
         showCloseButton: false
-        visible: !metadataModel.isDataValid && metadataModel.isDirty
+        visible: !form.metadataModel.isDataValid && form.metadataModel.isDirty
 
         Layout.topMargin: Kirigami.Units.largeSpacing
         Layout.fillWidth: true
@@ -107,16 +109,13 @@ Kirigami.FormLayout {
         implicitHeight: Theme.coverImageSize
         implicitWidth: Theme.coverImageSize
 
-        ImageWithFallback {
+        Kirigami.Icon {
             id: metadataImage
 
-            source: metadataModel.coverUrl
-            fallback: Qt.resolvedUrl(Theme.defaultAlbumImage)
+            readonly property url image: form.metadataModel.coverUrl
+            source: (image === "" || image === Qt.url("") || image === undefined || image === null) ? "not-an-icon" : image
+            fallback: Theme.defaultAlbumImage
 
-            sourceSize.width: Theme.coverImageSize * Screen.devicePixelRatio
-            sourceSize.height: Theme.coverImageSize * Screen.devicePixelRatio
-
-            fillMode: Image.PreserveAspectFit
             anchors.fill: parent
         }
     }
@@ -143,7 +142,7 @@ Kirigami.FormLayout {
             required property bool isReadOnly
             required property bool isRemovable
 
-            readonly property string formLabelText: i18nc("Track metadata form label, e.g. 'Artist:'", "%1:", name)
+            readonly property string formLabelText: KI18n.i18nc("Track metadata form label, e.g. 'Artist:'", "%1:", name)
             // Make labels bold on mobile read-only mode to help differentiate label from metadata
             readonly property bool singleColumnPlainText: !form.wideMode && !form.isCreating && !form.isModifying
             Kirigami.FormData.label: singleColumnPlainText ? "<b>" + formLabelText + "</b>" : formLabelText
@@ -168,8 +167,8 @@ Kirigami.FormLayout {
                 onEdited: delegateRoot.model.display = display
                 readOnly: form.readOnly || delegateRoot.isReadOnly
 
-                onAddField: metadataModel.addData(proxyModel.mapRowToSource(index))
-                onDeleteField: metadataModel.removeData(proxyModel.mapRowToSource(index))
+                onAddField: form.metadataModel.addData(proxyModel.mapRowToSource(index))
+                onDeleteField: form.metadataModel.removeData(proxyModel.mapRowToSource(index))
                 Layout.minimumHeight: Kirigami.Units.gridUnit * 1.5
             }
         }

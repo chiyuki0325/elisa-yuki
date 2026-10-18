@@ -8,11 +8,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 2.15
-import QtQuick.Window 2.2
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQuick.Window
 import QtQuick.Effects as FX
-import org.kde.kirigami 2.5 as Kirigami
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 import org.kde.elisa
 
 FocusScope {
@@ -37,9 +38,53 @@ FocusScope {
 
     property int handlePosition: implicitHeight
 
+    property bool lyricsVisible: false
+
     signal openArtist()
     signal openAlbum()
     signal openNowPlaying()
+
+    readonly property int trackType: ElisaApplication.manageHeaderBar.trackType
+    readonly property int databaseId: ElisaApplication.manageHeaderBar.databaseId
+    readonly property url fileUrl: ElisaApplication.manageHeaderBar.fileUrl
+
+    TrackContextMetaDataModel {
+        id: metaDataModel
+        onLyricsChanged: lyricsView.model.setLyric(lyrics)
+        manager: ElisaApplication.musicManager
+    }
+
+    //Required for TrackContextMetaDataModel to work properly
+
+    onFileUrlChanged: {
+        if (ElisaApplication.musicManager && trackType !== undefined && fileUrl !== undefined && fileUrl.toString().length !== 0) {
+            if (databaseId !== 0) {
+                metaDataModel.initializeByIdAndUrl(trackType, databaseId, fileUrl);
+            } else {
+                metaDataModel.initializeByUrl(trackType, fileUrl);
+            }
+        }
+    }
+
+    onTrackTypeChanged: {
+        if (ElisaApplication.musicManager && trackType !== undefined && fileUrl !== undefined && fileUrl.toString().length !== 0) {
+            if (databaseId !== 0) {
+                metaDataModel.initializeByIdAndUrl(trackType, databaseId, fileUrl);
+            } else {
+                metaDataModel.initializeByUrl(trackType, fileUrl);
+            }
+        }
+    }
+
+    Connections {
+        target: ElisaApplication
+
+        function onMusicManagerChanged() {
+            if (ElisaApplication.musicManager && headerBar.trackType !== undefined && headerBar.databaseId !== 0) {
+                metaDataModel.initializeByIdAndUrl(headerBar.trackType, headerBar.databaseId, headerBar.fileUrl);
+            }
+        }
+    }
 
     onImageChanged: {
         if (changeBackgroundTransition.running) {
@@ -56,38 +101,34 @@ FocusScope {
     function loadImage() {
         if (background.pendingImageIncubator) {
             background.pendingImageIncubator.forceCompletion();
-            background.pendingImageIncubator.object.statusChanged.disconnect(replaceWhenLoaded);
-            background.pendingImageIncubator.object.destroy();
-            background.pendingImageIncubator = undefined;
         }
 
         if (images.pendingImageIncubator) {
             images.pendingImageIncubator.forceCompletion();
-            images.pendingImageIncubator.object.statusChanged.disconnect(replaceIconWhenLoaded);
-            images.pendingImageIncubator.object.destroy();
-            images.pendingImageIncubator = undefined;
         }
 
         background.doesSkipAnimation = background.currentItem == undefined || !headerBar.transitionsEnabled;
+
+        //if the file does not have embedded cover images, fall back to generic
+        const fallbackBackground = Qt.resolvedUrl(Theme.defaultBackgroundImage);
         background.pendingImageIncubator = backgroundComponent.incubateObject(background, {
-            "source": image,
+            "source": (image === "" || image === Qt.url("") || image === undefined || image === null) ? fallbackBackground : image,
             "opacity": 0,
         });
         images.pendingImageIncubator = mainIconComponent.incubateObject(images, {
-            "source": image,
+            //Kirigami.Icon resolves an empty url as truthy, so it loads nothing for some reason. So load some garbage data instead
+            "source": (image === "" || image === Qt.url("") || image === undefined || image === null) ? "not-an-icon" : image,
             "opacity": 0,
         });
     }
 
-    function replaceWhenLoaded() {
-        background.pendingImageIncubator.object.statusChanged.disconnect(replaceWhenLoaded);
-        background.replace(background.pendingImageIncubator.object, {}, StackView.Transition);
+    function replaceWhenLoaded(item) {
+        background.replace(item, {}, StackView.Transition);
         background.pendingImageIncubator = undefined;
     }
 
-    function replaceIconWhenLoaded() {
-        images.pendingImageIncubator.object.statusChanged.disconnect(replaceIconWhenLoaded);
-        images.replace(images.pendingImageIncubator.object, {}, StackView.Transition);
+    function replaceIconWhenLoaded(item) {
+        images.replace(item, {}, StackView.Transition);
         images.pendingImageIncubator = undefined;
     }
 
@@ -140,16 +181,9 @@ FocusScope {
     Component {
         id: backgroundComponent
 
-        ImageWithFallback {
-            fallback: Qt.resolvedUrl(Theme.defaultBackgroundImage)
-            asynchronous: true
-
+        Image {
             sourceSize.width: Screen.width
             fillMode: Image.PreserveAspectCrop
-
-            StackView.onRemoved: {
-                destroy();
-            }
 
             Rectangle {
                 anchors.fill: parent
@@ -159,9 +193,9 @@ FocusScope {
 
             Component.onCompleted: {
                 if (status === Image.Loading) {
-                    statusChanged.connect(headerBar.replaceWhenLoaded);
+                    statusChanged.connect(() => { if (status === Image.Ready || status === Image.Error) { headerBar.replaceWhenLoaded(this) } });
                 } else {
-                    headerBar.replaceWhenLoaded();
+                    headerBar.replaceWhenLoaded(this);
                 }
             }
 
@@ -174,22 +208,80 @@ FocusScope {
         }
     }
 
-    FlatButtonWithToolTip {
+    Item {
+        id: headerBarHeaderContainer
+
+        readonly property int handleVisible: mainWindow.contextDrawer.handleVisible
+        readonly property int handleMargin: Kirigami.Units.smallSpacing
+        readonly property int handleWidth: (handleMargin * 2) + mainWindow.contextDrawer.handle.width
+
         anchors.top: parent.top
+        anchors.left: parent.left
         anchors.right: parent.right
-        // leave space for contextDrawer handle if it is visible (party mode), and match the top padding of the handle
-        anchors.rightMargin: mainWindow.contextDrawer.handleVisible ? mainWindow.contextDrawer.handle.width : 0
-        anchors.topMargin: mainWindow.contextDrawer.handleVisible ? 0.75 * Kirigami.Units.smallSpacing : 0
+        anchors.topMargin: handleVisible ? handleMargin : 0
 
-        visible: mainWindow.visibility == Window.FullScreen
 
-        text: i18nc("@action:button", "Exit Full Screen")
-        icon.name: "view-restore"
-        display: AbstractButton.TextBesideIcon
-        icon.color: Theme.headerForegroundColor
-        Kirigami.Theme.textColor: Theme.headerForegroundColor
+        RowLayout {
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
 
-        onClicked: mainWindow.restorePreviousStateBeforeFullScreen();
+            spacing: 0
+
+            FlatButtonWithToolTip {
+                id: playlistToggleButton
+                autoExclusive: true
+
+                visible: headerBar.isMaximized
+
+                text: KI18n.i18nc("@action:inmenu", "Playlist")
+                icon.name: "view-media-playlist"
+                display: AbstractButton.TextBesideIcon
+                icon.color: Theme.headerForegroundColor
+                Kirigami.Theme.textColor: Theme.headerForegroundColor
+
+                checkable: true
+                checked: !headerBar.lyricsVisible
+                onCheckedChanged: if (checked) headerBar.lyricsVisible = false
+            }
+
+            FlatButtonWithToolTip {
+                id: lyricsToggleButton
+                autoExclusive: true
+
+                visible: headerBar.isMaximized
+
+                text: KI18n.i18nc("@action:button", "Lyrics")
+                icon.name: "view-media-lyrics"
+                display: AbstractButton.TextBesideIcon
+                icon.color: Theme.headerForegroundColor
+                Kirigami.Theme.textColor: Theme.headerForegroundColor
+
+                checkable: true
+                checked: headerBar.lyricsVisible
+                onCheckedChanged: if (checked) headerBar.lyricsVisible = true
+            }
+
+        }
+
+        FlatButtonWithToolTip {
+            readonly property bool isFullScreen: mainWindow.visibility == Window.FullScreen
+
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.rightMargin: headerBarHeaderContainer.handleVisible ? headerBarHeaderContainer.handleWidth : 0
+
+            visible: headerBar.isMaximized
+
+            text: isFullScreen
+                ? KI18n.i18nc("@action:button", "Exit Full Screen")
+                : KI18n.i18nc("@action:button", "Enter Full Screen")
+            icon.name: "view-restore"
+            display: AbstractButton.TextBesideIcon
+            icon.color: Theme.headerForegroundColor
+            Kirigami.Theme.textColor: Theme.headerForegroundColor
+
+            onClicked: isFullScreen ? mainWindow.restorePreviousStateBeforeFullScreen() : mainWindow.goFullScreen()
+        }
     }
 
     MediaPlayerControl {
@@ -203,11 +295,10 @@ FocusScope {
         anchors.bottom: background.bottom
 
         isTranslucent: headerBar.height > height
-        isNearCollapse: headerBar.height < height * 2
 
         onHandlePositionChanged: (y, offset) => {
             const newHeight = headerBar.height - offset + y
-            handlePosition = Math.max(newHeight, 0)
+            headerBar.handlePosition = Math.max(newHeight, 0)
         }
     }
 
@@ -218,6 +309,7 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: playControlItem.top
+        anchors.topMargin: headerBar.isMaximized ? Kirigami.Units.largeSpacing : 0
 
         spacing: 0
 
@@ -231,22 +323,22 @@ FocusScope {
             id: gridLayoutContent
             visible: contentZone.height > mainLabel.height
 
-            columns: portrait? 1: 2
+            columns: headerBar.portrait ? 1: 2
 
-            columnSpacing: Kirigami.Units.largeSpacing * (isMaximized ? 4 : 1)
+            columnSpacing: Kirigami.Units.largeSpacing * (headerBar.isMaximized ? 4 : 1)
             rowSpacing: Kirigami.Units.largeSpacing
 
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.rightMargin: (LayoutMirroring.enabled && !portrait && !isMaximized)? contentZone.width * 0.15: 4 * Kirigami.Units.largeSpacing
-            Layout.leftMargin: (!LayoutMirroring.enabled && !portrait && !isMaximized)? contentZone.width * 0.15: 4 * Kirigami.Units.largeSpacing
-            Layout.topMargin: isMaximized? 4 * Kirigami.Units.largeSpacing : 0
-            Layout.bottomMargin: isMaximized? 4 * Kirigami.Units.largeSpacing : 0
-            Layout.maximumWidth: contentZone.width - 2 * ((!portrait && !isMaximized) ? contentZone.width * 0.15 : 4 * Kirigami.Units.largeSpacing)
+            Layout.rightMargin: (LayoutMirroring.enabled && !headerBar.portrait && !headerBar.isMaximized)? contentZone.width * 0.15: 4 * Kirigami.Units.largeSpacing
+            Layout.leftMargin: (!LayoutMirroring.enabled && !headerBar.portrait && !headerBar.isMaximized)? contentZone.width * 0.15: 4 * Kirigami.Units.largeSpacing
+            Layout.topMargin: headerBar.isMaximized? 4 * Kirigami.Units.largeSpacing : 0
+            Layout.bottomMargin: headerBar.isMaximized? 4 * Kirigami.Units.largeSpacing : 0
+            Layout.maximumWidth: contentZone.width - 2 * ((!headerBar.portrait && !headerBar.isMaximized) ? contentZone.width * 0.15 : 4 * Kirigami.Units.largeSpacing)
 
             Behavior on Layout.topMargin {
-                enabled: transitionsEnabled
+                enabled: headerBar.transitionsEnabled
                 NumberAnimation {
                     easing.type: Easing.InOutQuad
                     duration: Kirigami.Units.shortDuration
@@ -254,7 +346,7 @@ FocusScope {
             }
 
             Behavior on Layout.leftMargin {
-                enabled: transitionsEnabled
+                enabled: headerBar.transitionsEnabled
                 NumberAnimation {
                     easing.type: Easing.InOutQuad
                     duration: Kirigami.Units.shortDuration
@@ -264,7 +356,7 @@ FocusScope {
             StackView {
                 id: images
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                property double imageSize: Math.min(smallerDimension * 0.9, portrait ? gridLayoutContent.height/3 : gridLayoutContent.width/2)
+                property double imageSize: Math.min(headerBar.smallerDimension * 0.9, headerBar.portrait ? gridLayoutContent.height/3 : gridLayoutContent.width/2)
                 property var pendingImageIncubator
 
                 Layout.preferredHeight: imageSize
@@ -291,28 +383,19 @@ FocusScope {
             Component {
                 id: mainIconComponent
 
-                ImageWithFallback {
-                    asynchronous: true
-                    mipmap: true
+                Kirigami.Icon {
+                    width: parent ? parent.width : 0
+                    height: parent ? parent.height : 0
 
-                    fallback: Qt.resolvedUrl(Theme.defaultAlbumImage)
-
-                    sourceSize {
-                        width: imageSourceSize * Screen.devicePixelRatio
-                        height: imageSourceSize * Screen.devicePixelRatio
-                    }
-
-                    fillMode: Image.PreserveAspectFit
-
-                    StackView.onRemoved: {
-                        destroy();
-                    }
+                    fallback: Theme.defaultAlbumImage
+                    roundToIconSize: false
+                    smooth: true
 
                     Component.onCompleted: {
-                        if (status === Image.Loading) {
-                            statusChanged.connect(headerBar.replaceIconWhenLoaded);
+                        if (status === Kirigami.Icon.Loading) {
+                            statusChanged.connect(() => { if (status === Kirigami.Icon.Ready || status === Kirigami.Icon.Error) { headerBar.replaceIconWhenLoaded(this) } });
                         } else {
-                            headerBar.replaceIconWhenLoaded();
+                            headerBar.replaceIconWhenLoaded(this);
                         }
                     }
                 }
@@ -331,7 +414,7 @@ FocusScope {
 
                     rowSpacing: Kirigami.Units.largeSpacing
                     columnSpacing: Kirigami.Units.largeSpacing * 6
-                    Layout.alignment:  (portrait && isMaximized ? Qt.AlignHCenter: Qt.AlignLeft) | Qt.AlignTop
+                    Layout.alignment:  (headerBar.portrait && headerBar.isMaximized ? Qt.AlignHCenter: Qt.AlignLeft) | Qt.AlignTop
                     Layout.fillWidth: true
                     Layout.fillHeight: false
                     Layout.maximumHeight: {
@@ -344,15 +427,14 @@ FocusScope {
                     states: State {
                         name: "leftToRight"
                         when: contentZone.height < (mainLabel.height * 3 + Kirigami.Units.largeSpacing * 4
-                                                + (ratingVisible ? mainRating.height + Kirigami.Units.largeSpacing : 0) )
+                                                + (headerBar.ratingVisible ? mainRating.height + Kirigami.Units.largeSpacing : 0) )
                         PropertyChanges {
-                            target: trackInfoGrid
-                            flow: Grid.LeftToRight
-                            Layout.alignment: (portrait? Qt.AlignHCenter: Qt.AlignLeft) | Qt.AlignVCenter
-                            Layout.maximumHeight: gridLayoutContent.height
-                            rows: 1
-                            columns: 4
-                            isLeftToRight: true
+                            trackInfoGrid.flow: Grid.LeftToRight
+                            trackInfoGrid.Layout.alignment: (headerBar.portrait? Qt.AlignHCenter: Qt.AlignLeft) | Qt.AlignVCenter
+                            trackInfoGrid.Layout.maximumHeight: gridLayoutContent.height
+                            trackInfoGrid.rows: 1
+                            trackInfoGrid.columns: 4
+                            trackInfoGrid.isLeftToRight: true
                         }
                     }
 
@@ -361,9 +443,9 @@ FocusScope {
 
                     LabelWithToolTip {
                         id: mainLabel
-                        text: title
+                        text: headerBar.title
                         Layout.fillWidth: true
-                        horizontalAlignment: portrait? Text.AlignHCenter : Text.AlignLeft
+                        horizontalAlignment: headerBar.portrait? Text.AlignHCenter : Text.AlignLeft
                         level: 1
                         font.bold: true
 
@@ -371,9 +453,8 @@ FocusScope {
                             name: "mainLabelLeftToRight"
                             when: trackInfoGrid.isLeftToRight
                             PropertyChanges {
-                                target: mainLabel
-                                Layout.minimumWidth: Math.min(implicitWidth, trackInfoGrid.colWidth)
-                                Layout.maximumWidth: implicitWidth * 1.2
+                                mainLabel.Layout.minimumWidth: Math.min(mainLabel.implicitWidth, trackInfoGrid.colWidth)
+                                mainLabel.Layout.maximumWidth: mainLabel.implicitWidth * 1.2
                             }
                         }
 
@@ -384,13 +465,13 @@ FocusScope {
                             height: parent.height
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                openNowPlaying()
+                                headerBar.openNowPlaying()
                                 playControlItem.isMaximized = false
                             }
 
                             states: State {
                                 name: "titleMouseAreaAnchor"
-                                when: portrait && isMaximized
+                                when: headerBar.portrait && headerBar.isMaximized
                                 AnchorChanges {
                                     target: titleMouseArea
                                     anchors.left: undefined
@@ -402,19 +483,18 @@ FocusScope {
 
                     LabelWithToolTip {
                         id: authorLabel
-                        text: artist
-                        visible: artist
+                        text: headerBar.artist
+                        visible: headerBar.artist
                         Layout.fillWidth: true
-                        horizontalAlignment: portrait? Text.AlignHCenter : Text.AlignLeft
+                        horizontalAlignment: headerBar.portrait? Text.AlignHCenter : Text.AlignLeft
                         level: 3
 
                         states: State {
                             name: "authorLabelLeftToRight"
                             when: trackInfoGrid.isLeftToRight
                             PropertyChanges {
-                                target: authorLabel
-                                Layout.minimumWidth: Math.min(implicitWidth, trackInfoGrid.colWidth)
-                                Layout.maximumWidth: implicitWidth * 1.2
+                                authorLabel.Layout.minimumWidth: Math.min(authorLabel.implicitWidth, trackInfoGrid.colWidth)
+                                authorLabel.Layout.maximumWidth: authorLabel.implicitWidth * 1.2
                             }
                         }
 
@@ -425,13 +505,13 @@ FocusScope {
                             height: parent.height
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                openArtist()
+                                headerBar.openArtist()
                                 playControlItem.isMaximized = false
                             }
 
                             states: State {
                                 name: "authorMouseAreaAnchor"
-                                when: portrait && isMaximized
+                                when: headerBar.portrait && headerBar.isMaximized
                                 AnchorChanges {
                                     target: authorMouseArea
                                     anchors.left: undefined
@@ -443,19 +523,18 @@ FocusScope {
 
                     LabelWithToolTip {
                         id: albumLabel
-                        text: album
-                        visible: album
+                        text: headerBar.album
+                        visible: headerBar.album
                         Layout.fillWidth: true
-                        horizontalAlignment: portrait? Text.AlignHCenter : Text.AlignLeft
+                        horizontalAlignment: headerBar.portrait ? Text.AlignHCenter : Text.AlignLeft
                         level: 3
 
                         states: State {
                             name: "albumLabelLeftToRight"
                             when: trackInfoGrid.isLeftToRight
                             PropertyChanges {
-                                target: albumLabel
-                                Layout.minimumWidth: Math.min(implicitWidth, trackInfoGrid.colWidth)
-                                Layout.maximumWidth: implicitWidth * 1.2
+                                albumLabel.Layout.minimumWidth: Math.min(albumLabel.implicitWidth, trackInfoGrid.colWidth)
+                                albumLabel.Layout.maximumWidth: albumLabel.implicitWidth * 1.2
                             }
                         }
 
@@ -466,13 +545,13 @@ FocusScope {
                             height: parent.height
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                openAlbum()
+                                headerBar.openAlbum()
                                 playControlItem.isMaximized = false
                             }
 
                             states: State {
                                 name: "albumMouseAreaAnchor"
-                                when: portrait && isMaximized
+                                when: headerBar.portrait && headerBar.isMaximized
                                 AnchorChanges {
                                     target: albumMouseArea
                                     anchors.left: undefined
@@ -484,15 +563,15 @@ FocusScope {
 
                     RatingStar {
                         id: mainRating
-                        visible: ratingVisible
-                        starRating: trackRating
+                        visible: headerBar.ratingVisible
+                        starRating: headerBar.trackRating
                     }
                 }
                 Loader {
                     id: playLoader
                     active: headerBar.isMaximized
                     asynchronous: true
-                    visible: headerBar.isMaximized
+                    visible: headerBar.isMaximized && !headerBar.lyricsVisible
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -501,6 +580,26 @@ FocusScope {
 
                     sourceComponent: SimplePlayListView {
                         model: ElisaApplication.mediaPlayListProxyModel
+                    }
+                }
+
+                LyricsView {
+                    id: lyricsView
+                    visible: headerBar.isMaximized && headerBar.lyricsVisible
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignRight | Qt.AlignTop
+                    Layout.topMargin: Kirigami.Units.largeSpacing
+
+                    fadeInOut: true
+
+                    pointSize: {
+                        if (lyricsView.width < 300 || lyricsView.height < 220) {
+                            return Kirigami.Theme.defaultFont.pointSize;
+                        } else {
+                            return Kirigami.Theme.defaultFont.pointSize * 1.5;
+                        }
                     }
                 }
             }
@@ -524,5 +623,13 @@ FocusScope {
 
     Component.onCompleted: {
         loadImage();
+
+        if (ElisaApplication.musicManager && trackType !== undefined) {
+            if (ElisaApplication.manageHeaderBar.databaseId !== 0) {
+                metaDataModel.initializeByIdAndUrl(trackType, databaseId, fileUrl);
+            } else {
+                metaDataModel.initializeByUrl(trackType, fileUrl);
+            }
+        }
     }
 }
